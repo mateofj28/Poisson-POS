@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button, Input, Card, CardBody, CardHeader } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { useAuthStore } from '../store/auth.store';
 import { authService } from '../services/auth.service';
 import toast from 'react-hot-toast';
@@ -52,41 +52,42 @@ const LoginPage = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black p-4">
-            <Card className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 shadow-2xl">
-                <CardHeader className="flex flex-col items-center gap-2 pt-8 pb-2">
-                    <span className="text-4xl">🐟</span>
+            <div className="w-full max-w-md rounded-3xl bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 shadow-2xl overflow-hidden">
+                {/* Header */}
+                <div className="flex flex-col items-center gap-2 pt-8 pb-2 px-8">
+                    <span className="text-5xl">🐟</span>
                     <h1 className="text-2xl font-bold text-white tracking-tight">Poisson POS</h1>
                     <p className="text-sm text-zinc-400">Sistema de Punto de Venta</p>
-                </CardHeader>
-                <CardBody className="px-8 pb-8 pt-4">
-                    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-                        <Input
-                            label="Correo electrónico"
-                            type="email"
-                            variant="bordered"
-                            size="lg"
-                            {...register('email')}
-                            isInvalid={!!errors.email}
-                            errorMessage={errors.email?.message}
-                            classNames={{
-                                inputWrapper: "border-zinc-700 bg-zinc-800/50 hover:border-blue-500 data-[focused=true]:border-blue-500",
-                                label: "text-zinc-400",
-                                input: "text-white",
-                            }}
-                        />
+                </div>
 
-                        <Input
-                            label="Contraseña"
-                            type={showPassword ? 'text' : 'password'}
-                            variant="bordered"
-                            size="lg"
-                            {...register('password')}
-                            isInvalid={!!errors.password}
-                            errorMessage={errors.password?.message}
-                            endContent={
+                {/* Form */}
+                <div className="px-8 pb-8 pt-4">
+                    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+                        {/* Email */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm text-zinc-400 pl-1">Correo electrónico</label>
+                            <input
+                                type="email"
+                                {...register('email')}
+                                className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                placeholder="tu@email.com"
+                            />
+                            {errors.email && <span className="text-xs text-red-400 pl-1">{errors.email.message}</span>}
+                        </div>
+
+                        {/* Password */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm text-zinc-400 pl-1">Contraseña</label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    {...register('password')}
+                                    className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                    placeholder="••••••••"
+                                />
                                 <button
                                     type="button"
-                                    className="text-zinc-400 hover:text-white transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? (
@@ -100,26 +101,21 @@ const LoginPage = () => {
                                         </svg>
                                     )}
                                 </button>
-                            }
-                            classNames={{
-                                inputWrapper: "border-zinc-700 bg-zinc-800/50 hover:border-blue-500 data-[focused=true]:border-blue-500",
-                                label: "text-zinc-400",
-                                input: "text-white",
-                            }}
-                        />
+                            </div>
+                            {errors.password && <span className="text-xs text-red-400 pl-1">{errors.password.message}</span>}
+                        </div>
 
+                        {/* Submit Button */}
                         <Button
                             type="submit"
-                            color="primary"
-                            size="lg"
                             isLoading={loading}
-                            className="w-full font-semibold text-base mt-2 bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
+                            className="w-full py-3 mt-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-base shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
                         >
                             Iniciar Sesión
                         </Button>
                     </form>
-                </CardBody>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 };
