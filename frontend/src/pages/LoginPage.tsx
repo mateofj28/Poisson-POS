@@ -3,18 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-    Box,
-    Card,
-    CardContent,
-    TextField,
-    Button,
-    Typography,
-    InputAdornment,
-    IconButton,
-    CircularProgress,
-} from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
+import { Button, Input, Card, CardBody, CardHeader } from '@heroui/react';
 import { useAuthStore } from '../store/auth.store';
 import { authService } from '../services/auth.service';
 import toast from 'react-hot-toast';
@@ -62,87 +51,76 @@ const LoginPage = () => {
     };
 
     return (
-        <Box
-            sx={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #3E2723 0%, #1A1A1A 50%, #3E2723 100%)',
-                p: 2,
-            }}
-        >
-            <Card sx={{ maxWidth: 420, width: '100%', p: 2 }}>
-                <CardContent>
-                    <Box sx={{ textAlign: 'center', mb: 4 }}>
-                        <Typography variant="h4" sx={{ color: 'primary.light', mb: 1 }}>
-                            🐟 Poisson POS
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Sistema de Punto de Venta
-                        </Typography>
-                    </Box>
-
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <TextField
-                            fullWidth
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black p-4">
+            <Card className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 shadow-2xl">
+                <CardHeader className="flex flex-col items-center gap-2 pt-8 pb-2">
+                    <span className="text-4xl">🐟</span>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">Poisson POS</h1>
+                    <p className="text-sm text-zinc-400">Sistema de Punto de Venta</p>
+                </CardHeader>
+                <CardBody className="px-8 pb-8 pt-4">
+                    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+                        <Input
                             label="Correo electrónico"
                             type="email"
-                            margin="normal"
+                            variant="bordered"
+                            size="lg"
                             {...register('email')}
-                            error={!!errors.email}
-                            helperText={errors.email?.message}
-                            slotProps={{
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Email color="action" />
-                                        </InputAdornment>
-                                    ),
-                                },
+                            isInvalid={!!errors.email}
+                            errorMessage={errors.email?.message}
+                            classNames={{
+                                inputWrapper: "border-zinc-700 bg-zinc-800/50 hover:border-blue-500 data-[focused=true]:border-blue-500",
+                                label: "text-zinc-400",
+                                input: "text-white",
                             }}
                         />
 
-                        <TextField
-                            fullWidth
+                        <Input
                             label="Contraseña"
                             type={showPassword ? 'text' : 'password'}
-                            margin="normal"
+                            variant="bordered"
+                            size="lg"
                             {...register('password')}
-                            error={!!errors.password}
-                            helperText={errors.password?.message}
-                            slotProps={{
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Lock color="action" />
-                                        </InputAdornment>
-                                    ),
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                },
+                            isInvalid={!!errors.password}
+                            errorMessage={errors.password?.message}
+                            endContent={
+                                <button
+                                    type="button"
+                                    className="text-zinc-400 hover:text-white transition-colors"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                        </svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                        </svg>
+                                    )}
+                                </button>
+                            }
+                            classNames={{
+                                inputWrapper: "border-zinc-700 bg-zinc-800/50 hover:border-blue-500 data-[focused=true]:border-blue-500",
+                                label: "text-zinc-400",
+                                input: "text-white",
                             }}
                         />
 
                         <Button
-                            fullWidth
                             type="submit"
-                            variant="contained"
-                            size="large"
-                            disabled={loading}
-                            sx={{ mt: 3, py: 1.5 }}
+                            color="primary"
+                            size="lg"
+                            isLoading={loading}
+                            className="w-full font-semibold text-base mt-2 bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
                         >
-                            {loading ? <CircularProgress size={24} /> : 'Iniciar Sesión'}
+                            Iniciar Sesión
                         </Button>
                     </form>
-                </CardContent>
+                </CardBody>
             </Card>
-        </Box>
+        </div>
     );
 };
 
