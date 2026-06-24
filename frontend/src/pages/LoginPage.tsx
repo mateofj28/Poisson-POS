@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@heroui/react';
+import { Button, TextField, Label, Input, FieldError } from '@heroui/react';
 import { useAuthStore } from '../store/auth.store';
 import { authService } from '../services/auth.service';
 import toast from 'react-hot-toast';
@@ -64,30 +64,38 @@ const LoginPage = () => {
                 <div className="px-8 pb-8 pt-4">
                     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
                         {/* Email */}
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm text-zinc-400 pl-1">Correo electrónico</label>
-                            <input
-                                type="email"
-                                {...register('email')}
-                                className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        <TextField
+                            isRequired
+                            isInvalid={!!errors.email}
+                            className="w-full"
+                            name="email"
+                            type="email"
+                        >
+                            <Label>Correo electrónico</Label>
+                            <Input
                                 placeholder="tu@email.com"
+                                {...register('email')}
                             />
-                            {errors.email && <span className="text-xs text-red-400 pl-1">{errors.email.message}</span>}
-                        </div>
+                            {errors.email && <FieldError>{errors.email.message}</FieldError>}
+                        </TextField>
 
                         {/* Password */}
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm text-zinc-400 pl-1">Contraseña</label>
+                        <TextField
+                            isRequired
+                            isInvalid={!!errors.password}
+                            className="w-full"
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                        >
+                            <Label>Contraseña</Label>
                             <div className="relative">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    {...register('password')}
-                                    className="w-full px-4 py-3 pr-12 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                <Input
                                     placeholder="••••••••"
+                                    {...register('password')}
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors z-10"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? (
@@ -102,14 +110,16 @@ const LoginPage = () => {
                                     )}
                                 </button>
                             </div>
-                            {errors.password && <span className="text-xs text-red-400 pl-1">{errors.password.message}</span>}
-                        </div>
+                            {errors.password && <FieldError>{errors.password.message}</FieldError>}
+                        </TextField>
 
                         {/* Submit Button */}
                         <Button
                             type="submit"
+                            color="primary"
+                            size="lg"
                             isLoading={loading}
-                            className="w-full py-3 mt-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-base shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            className="w-full mt-2"
                         >
                             Iniciar Sesión
                         </Button>
