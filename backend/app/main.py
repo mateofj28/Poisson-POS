@@ -30,9 +30,19 @@ app = FastAPI(
 )
 
 # CORS
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+# In production, allow the Vercel deployment
+if settings.ENVIRONMENT == "production":
+    origins.append("https://*.vercel.app")
+    origins = ["*"]  # Allow all for now, restrict in production with specific domain
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
