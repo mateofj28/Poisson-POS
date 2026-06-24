@@ -1,0 +1,64 @@
+import { createBrowserRouter } from 'react-router-dom';
+import MainLayout from '../layouts/MainLayout';
+import ProtectedRoute from './ProtectedRoute';
+import LoginPage from '../pages/LoginPage';
+import DashboardPage from '../pages/DashboardPage';
+import TablesPage from '../pages/TablesPage';
+import EmployeesPage from '../pages/EmployeesPage';
+import ProductsPage from '../pages/ProductsPage';
+import CategoriesPage from '../pages/CategoriesPage';
+import BarrelsPage from '../pages/BarrelsPage';
+import OrdersPage from '../pages/OrdersPage';
+import SalesPage from '../pages/SalesPage';
+import InventoryPage from '../pages/InventoryPage';
+import CashRegisterPage from '../pages/CashRegisterPage';
+
+const router = createBrowserRouter([
+    {
+        path: '/login',
+        element: <LoginPage />,
+    },
+    {
+        element: <ProtectedRoute />,
+        children: [
+            {
+                element: <MainLayout />,
+                children: [
+                    { path: '/', element: <DashboardPage /> },
+                    { path: '/dashboard', element: <DashboardPage /> },
+                    { path: '/tables', element: <TablesPage /> },
+                    { path: '/orders', element: <OrdersPage /> },
+                ],
+            },
+        ],
+    },
+    {
+        element: <ProtectedRoute allowedRoles={['admin', 'cajero']} />,
+        children: [
+            {
+                element: <MainLayout />,
+                children: [
+                    { path: '/sales', element: <SalesPage /> },
+                    { path: '/cash-register', element: <CashRegisterPage /> },
+                    { path: '/inventory', element: <InventoryPage /> },
+                ],
+            },
+        ],
+    },
+    {
+        element: <ProtectedRoute allowedRoles={['admin']} />,
+        children: [
+            {
+                element: <MainLayout />,
+                children: [
+                    { path: '/employees', element: <EmployeesPage /> },
+                    { path: '/products', element: <ProductsPage /> },
+                    { path: '/categories', element: <CategoriesPage /> },
+                    { path: '/barrels', element: <BarrelsPage /> },
+                ],
+            },
+        ],
+    },
+]);
+
+export default router;
