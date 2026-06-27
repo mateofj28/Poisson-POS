@@ -1,46 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import {
-    Box,
-    Drawer,
-    AppBar,
-    Toolbar,
-    Typography,
-    List,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    IconButton,
-    Avatar,
-    Menu,
-    MenuItem,
-    Divider,
-    useMediaQuery,
-    useTheme,
-    BottomNavigation,
-    BottomNavigationAction,
-    Paper,
-    Stack,
-} from '@mui/material';
-import {
-    Menu as MenuIcon,
-    Dashboard as DashboardIcon,
-    TableBar as TableBarIcon,
-    People as PeopleIcon,
-    Inventory as InventoryIcon,
-    Category as CategoryIcon,
-    LocalBar as LocalBarIcon,
-    Receipt as ReceiptIcon,
-    PointOfSale as PointOfSaleIcon,
-    MoveToInbox as MoveToInboxIcon,
-    ShoppingCart as ShoppingCartIcon,
-    Logout as LogoutIcon,
-    MoreHoriz as MoreHorizIcon,
-} from '@mui/icons-material';
+import { Button, Chip } from '@heroui/react';
 import { useAuthStore } from '../store/auth.store';
 import { authService } from '../services/auth.service';
-
-const DRAWER_WIDTH = 260;
 
 interface NavItem {
     label: string;
@@ -50,24 +12,49 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
-    { label: 'Mesas', path: '/tables', icon: <TableBarIcon /> },
-    { label: 'Pedidos', path: '/orders', icon: <ShoppingCartIcon /> },
-    { label: 'Ventas', path: '/sales', icon: <PointOfSaleIcon />, roles: ['admin', 'cajero'] },
-    { label: 'Caja', path: '/cash-register', icon: <ReceiptIcon />, roles: ['admin', 'cajero'] },
-    { label: 'Inventario', path: '/inventory', icon: <MoveToInboxIcon />, roles: ['admin', 'cajero'] },
-    { label: 'Productos', path: '/products', icon: <InventoryIcon />, roles: ['admin'] },
-    { label: 'Categorías', path: '/categories', icon: <CategoryIcon />, roles: ['admin'] },
-    { label: 'Barriles', path: '/barrels', icon: <LocalBarIcon />, roles: ['admin'] },
-    { label: 'Empleados', path: '/employees', icon: <PeopleIcon />, roles: ['admin'] },
+    {
+        label: 'Dashboard', path: '/dashboard',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>,
+    },
+    {
+        label: 'Mesas', path: '/tables',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" /></svg>,
+    },
+    {
+        label: 'Pedidos', path: '/orders',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>,
+    },
+    {
+        label: 'Ventas', path: '/sales', roles: ['admin', 'cajero'],
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg>,
+    },
+    {
+        label: 'Caja', path: '/cash-register', roles: ['admin', 'cajero'],
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>,
+    },
+    {
+        label: 'Inventario', path: '/inventory', roles: ['admin', 'cajero'],
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>,
+    },
+    {
+        label: 'Productos', path: '/products', roles: ['admin'],
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>,
+    },
+    {
+        label: 'Categorías', path: '/categories', roles: ['admin'],
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" /></svg>,
+    },
+    {
+        label: 'Barriles', path: '/barrels', roles: ['admin'],
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>,
+    },
+    {
+        label: 'Empleados', path: '/employees', roles: ['admin'],
+        icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>,
+    },
 ];
 
 const MainLayout = () => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const [mobileOpen, setMobileOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [moreAnchor, setMoreAnchor] = useState<null | HTMLElement>(null);
     const navigate = useNavigate();
     const location = useLocation();
     const { employee, setEmployee, logout, isAuthenticated } = useAuthStore();
@@ -78,15 +65,7 @@ const MainLayout = () => {
         }
     }, [isAuthenticated, employee, setEmployee, logout]);
 
-    const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
-
-    const handleNavClick = (path: string) => {
-        navigate(path);
-        if (isMobile) setMobileOpen(false);
-    };
-
     const handleLogout = () => {
-        setAnchorEl(null);
         authService.logout();
         logout();
         navigate('/login');
@@ -97,302 +76,83 @@ const MainLayout = () => {
         return employee && item.roles.includes(employee.role);
     });
 
-    // For bottom nav: show first 4 items + "More"
-    const bottomNavItems = filteredNavItems.slice(0, 4);
-    const moreNavItems = filteredNavItems.slice(4);
-
-    const currentBottomIndex = bottomNavItems.findIndex((item) => location.pathname === item.path);
-    const isInMoreSection = moreNavItems.some((item) => location.pathname === item.path);
-
-    const drawer = (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ p: 2.5, textAlign: 'center' }}>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main', letterSpacing: '-0.02em' }}>
-                    🐟 Poisson POS
-                </Typography>
-            </Box>
-            <Divider />
-            <List sx={{ flex: 1, px: 1, py: 1.5 }}>
-                {filteredNavItems.map((item) => (
-                    <ListItemButton
-                        key={item.path}
-                        onClick={() => handleNavClick(item.path)}
-                        selected={location.pathname === item.path}
-                    >
-                        <ListItemIcon sx={{ color: location.pathname === item.path ? 'primary.main' : 'text.secondary', minWidth: 40 }}>
-                            {item.icon}
-                        </ListItemIcon>
-                        <ListItemText
-                            primary={item.label}
-                            primaryTypographyProps={{
-                                fontWeight: location.pathname === item.path ? 600 : 400,
-                                color: location.pathname === item.path ? 'primary.main' : 'text.primary',
-                            }}
-                        />
-                    </ListItemButton>
-                ))}
-            </List>
-
-            {/* User section at bottom of sidebar */}
-            <Divider />
-            <Box sx={{ p: 2 }}>
-                <Stack direction="row" alignItems="center" spacing={1.5}>
-                    <Avatar
-                        sx={{
-                            width: 36,
-                            height: 36,
-                            bgcolor: 'primary.main',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                        }}
-                    >
-                        {employee?.first_name?.[0] || 'U'}
-                    </Avatar>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={600} noWrap>
-                            {employee ? `${employee.first_name} ${employee.last_name}` : ''}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            {employee?.role?.toUpperCase()}
-                        </Typography>
-                    </Box>
-                    <IconButton size="small" onClick={handleLogout}>
-                        <LogoutIcon fontSize="small" />
-                    </IconButton>
-                </Stack>
-            </Box>
-        </Box>
-    );
-
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-            {/* Top AppBar - mobile only */}
-            {isMobile && (
-                <AppBar
-                    position="fixed"
-                    sx={{
-                        backgroundColor: 'rgba(22, 22, 24, 0.72)',
-                        backdropFilter: 'blur(40px) saturate(180%)',
-                        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-                        borderBottom: '1px solid rgba(84, 84, 88, 0.36)',
-                        boxShadow: 'none',
-                    }}
-                >
-                    <Toolbar sx={{ minHeight: '56px !important' }}>
-                        <Typography variant="h6" fontWeight={700} sx={{ flex: 1, letterSpacing: '-0.01em' }}>
-                            Poisson POS
-                        </Typography>
-                        <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small">
-                            <Avatar
-                                sx={{
-                                    width: 32,
-                                    height: 32,
-                                    bgcolor: 'primary.main',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 600,
-                                }}
+        <div className="flex h-screen bg-black overflow-hidden">
+            {/* Sidebar */}
+            <aside className="w-[220px] flex flex-col bg-[#0a0a0a] border-r border-zinc-800/50 shrink-0">
+                {/* Logo */}
+                <div className="px-4 py-5 border-b border-zinc-800/50">
+                    <div className="flex items-center gap-2">
+                        <span className="text-lg">🐟</span>
+                        <span className="text-sm font-semibold text-white">Poisson POS</span>
+                    </div>
+                </div>
+
+                {/* User */}
+                <div className="px-4 py-3 border-b border-zinc-800/50">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-semibold text-white">
+                            {employee?.first_name?.[0] || 'U'}
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-xs font-medium text-white truncate">{employee ? `${employee.first_name} ${employee.last_name}` : ''}</p>
+                            <p className="text-[10px] text-zinc-500 uppercase">{employee?.role}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Navigation */}
+                <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+                    {filteredNavItems.map((item) => {
+                        const isActive = location.pathname === item.path;
+                        return (
+                            <button
+                                key={item.path}
+                                onClick={() => navigate(item.path)}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${isActive
+                                        ? 'bg-zinc-800 text-white'
+                                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                                    }`}
                             >
-                                {employee?.first_name?.[0] || 'U'}
-                            </Avatar>
-                        </IconButton>
-                        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-                            <MenuItem disabled>
-                                <Typography variant="body2">{employee?.first_name} — {employee?.role?.toUpperCase()}</Typography>
-                            </MenuItem>
-                            <Divider />
-                            <MenuItem onClick={handleLogout}>
-                                <LogoutIcon sx={{ mr: 1 }} fontSize="small" />
-                                Cerrar sesión
-                            </MenuItem>
-                        </Menu>
-                    </Toolbar>
-                </AppBar>
-            )}
+                                <span className={isActive ? 'text-white' : 'text-zinc-500'}>{item.icon}</span>
+                                {item.label}
+                            </button>
+                        );
+                    })}
+                </nav>
 
-            {/* Desktop AppBar */}
-            {!isMobile && (
-                <AppBar
-                    position="fixed"
-                    sx={{
-                        width: `calc(100% - ${DRAWER_WIDTH}px)`,
-                        ml: `${DRAWER_WIDTH}px`,
-                        backgroundColor: 'rgba(22, 22, 24, 0.72)',
-                        backdropFilter: 'blur(40px) saturate(180%)',
-                        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-                        borderBottom: '1px solid rgba(84, 84, 88, 0.36)',
-                        boxShadow: 'none',
-                    }}
-                >
-                    <Toolbar sx={{ minHeight: '56px !important' }}>
-                        <Box sx={{ flex: 1 }} />
-                        <Stack direction="row" alignItems="center" spacing={1.5}>
-                            <Typography variant="body2" color="text.secondary">
-                                {employee ? `${employee.first_name} ${employee.last_name}` : ''}
-                            </Typography>
-                            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small">
-                                <Avatar
-                                    sx={{
-                                        width: 32,
-                                        height: 32,
-                                        bgcolor: 'primary.main',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    {employee?.first_name?.[0] || 'U'}
-                                </Avatar>
-                            </IconButton>
-                            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-                                <MenuItem disabled>
-                                    <Typography variant="body2">{employee?.role?.toUpperCase()}</Typography>
-                                </MenuItem>
-                                <Divider />
-                                <MenuItem onClick={handleLogout}>
-                                    <LogoutIcon sx={{ mr: 1 }} fontSize="small" />
-                                    Cerrar sesión
-                                </MenuItem>
-                            </Menu>
-                        </Stack>
-                    </Toolbar>
-                </AppBar>
-            )}
-
-            {/* Desktop Sidebar */}
-            {!isMobile && (
-                <Box component="nav" sx={{ width: DRAWER_WIDTH, flexShrink: 0 }}>
-                    <Drawer
-                        variant="permanent"
-                        sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH } }}
-                        open
+                {/* Logout */}
+                <div className="px-2 py-3 border-t border-zinc-800/50">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
                     >
-                        {drawer}
-                    </Drawer>
-                </Box>
-            )}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                        </svg>
+                        Cerrar sesión
+                    </button>
+                </div>
+            </aside>
 
             {/* Main Content */}
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    p: { xs: 2, md: 3 },
-                    width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-                    pb: { xs: '100px', md: 3 },
-                }}
-            >
-                <Toolbar sx={{ minHeight: '56px !important' }} />
-                <Outlet />
-            </Box>
+            <main className="flex-1 flex flex-col overflow-hidden">
+                {/* Top bar */}
+                <header className="h-14 flex items-center justify-end px-6 border-b border-zinc-800/50 bg-[#0a0a0a] shrink-0">
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs text-zinc-500">{employee?.first_name} {employee?.last_name}</span>
+                        <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-semibold text-white">
+                            {employee?.first_name?.[0] || 'U'}
+                        </div>
+                    </div>
+                </header>
 
-            {/* iOS-style Bottom Tab Bar - mobile only */}
-            {isMobile && (
-                <Paper
-                    sx={{
-                        position: 'fixed',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        zIndex: 1200,
-                        backgroundColor: 'rgba(22, 22, 24, 0.78)',
-                        backdropFilter: 'blur(50px) saturate(200%)',
-                        WebkitBackdropFilter: 'blur(50px) saturate(200%)',
-                        borderTop: '1px solid rgba(84, 84, 88, 0.36)',
-                        borderRadius: 0,
-                        pb: 'env(safe-area-inset-bottom, 0px)',
-                    }}
-                    elevation={0}
-                >
-                    <BottomNavigation
-                        value={isInMoreSection ? 4 : currentBottomIndex}
-                        onChange={(_, newValue) => {
-                            if (newValue < bottomNavItems.length) {
-                                navigate(bottomNavItems[newValue].path);
-                            }
-                        }}
-                        sx={{
-                            backgroundColor: 'transparent',
-                            height: 64,
-                            '& .MuiBottomNavigationAction-root': {
-                                color: 'rgba(235, 235, 245, 0.45)',
-                                minWidth: 'auto',
-                                padding: '6px 0',
-                                gap: '2px',
-                                transition: 'color 0.2s ease',
-                                '&.Mui-selected': {
-                                    color: '#0A84FF',
-                                },
-                                '& .MuiBottomNavigationAction-label': {
-                                    fontSize: '0.65rem',
-                                    fontWeight: 500,
-                                    marginTop: '2px',
-                                    '&.Mui-selected': {
-                                        fontSize: '0.65rem',
-                                        fontWeight: 600,
-                                    },
-                                },
-                                '& .MuiSvgIcon-root': {
-                                    fontSize: '1.4rem',
-                                },
-                            },
-                        }}
-                        showLabels
-                    >
-                        {bottomNavItems.map((item) => (
-                            <BottomNavigationAction
-                                key={item.path}
-                                label={item.label}
-                                icon={item.icon}
-                            />
-                        ))}
-                        {moreNavItems.length > 0 && (
-                            <BottomNavigationAction
-                                label="Más"
-                                icon={<MoreHorizIcon />}
-                                onClick={(e) => setMoreAnchor(e.currentTarget)}
-                            />
-                        )}
-                    </BottomNavigation>
-
-                    {/* More menu */}
-                    <Menu
-                        anchorEl={moreAnchor}
-                        open={Boolean(moreAnchor)}
-                        onClose={() => setMoreAnchor(null)}
-                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                        slotProps={{
-                            paper: {
-                                sx: {
-                                    mb: 2,
-                                    minWidth: 200,
-                                },
-                            },
-                        }}
-                    >
-                        {moreNavItems.map((item) => (
-                            <MenuItem
-                                key={item.path}
-                                onClick={() => {
-                                    navigate(item.path);
-                                    setMoreAnchor(null);
-                                }}
-                                selected={location.pathname === item.path}
-                            >
-                                <ListItemIcon sx={{ color: location.pathname === item.path ? 'primary.main' : 'text.secondary' }}>
-                                    {item.icon}
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={item.label}
-                                    primaryTypographyProps={{
-                                        fontWeight: location.pathname === item.path ? 600 : 400,
-                                    }}
-                                />
-                            </MenuItem>
-                        ))}
-                    </Menu>
-                </Paper>
-            )}
-        </Box>
+                {/* Page Content */}
+                <div className="flex-1 overflow-y-auto p-6 bg-[#09090b]">
+                    <Outlet />
+                </div>
+            </main>
+        </div>
     );
 };
 
