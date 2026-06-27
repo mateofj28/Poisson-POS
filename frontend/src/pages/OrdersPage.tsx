@@ -26,6 +26,55 @@ const statusColor: Record<OrderStatus, 'warning' | 'primary' | 'success' | 'defa
     [OrderStatus.CANCELADO]: 'danger',
 };
 
+// Searchable product input component
+interface ProductSearchProps {
+    products: { id: number; name: string; sale_price: number }[];
+    isDark: boolean;
+    onSelect: (id: number) => void;
+}
+
+const ProductSearch = ({ products, isDark, onSelect }: ProductSearchProps) => {
+    const [search, setSearch] = useState('');
+    const [open, setOpen] = useState(false);
+
+    const filtered = search
+        ? products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+        : products;
+
+    return (
+        <div className="relative flex-1">
+            <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
+                onFocus={() => setOpen(true)}
+                placeholder="Escribe para buscar producto..."
+                className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+            />
+            {open && filtered.length > 0 && (
+                <div className={`absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-xl border shadow-xl z-50 ${isDark ? 'bg-[#1c1c1e] border-zinc-700' : 'bg-white border-zinc-200'}`}>
+                    {filtered.map((p) => (
+                        <button
+                            key={p.id}
+                            onClick={() => { onSelect(p.id); setSearch(''); setOpen(false); }}
+                            className={`w-full flex items-center justify-between px-4 py-2.5 text-sm cursor-pointer transition-colors ${isDark ? 'text-white hover:bg-zinc-800' : 'text-zinc-900 hover:bg-zinc-100'}`}
+                        >
+                            <span>{p.name}</span>
+                            <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>${p.sale_price.toLocaleString()}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+            {open && filtered.length === 0 && search && (
+                <div className={`absolute top-full left-0 right-0 mt-1 rounded-xl border shadow-xl z-50 p-4 text-center text-sm ${isDark ? 'bg-[#1c1c1e] border-zinc-700 text-zinc-500' : 'bg-white border-zinc-200 text-zinc-400'}`}>
+                    No se encontraron productos
+                </div>
+            )}
+            {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)}></div>}
+        </div>
+    );
+};
+
 const OrdersPage = () => {
     const queryClient = useQueryClient();
     const { theme } = useThemeStore();
@@ -182,7 +231,7 @@ const OrdersPage = () => {
                     <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={handleCloseDrawer}></div>
 
                     {/* Drawer Panel */}
-                    <div className={`fixed top-0 right-0 z-50 h-full w-full max-w-md flex flex-col shadow-2xl border-l transition-transform duration-300 ${isDark ? 'bg-[#111113] border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                    <div className={`fixed top-0 right-0 z-50 h-full w-full max-w-md flex flex-col shadow-2xl border-l transition-transform duration-300 ${isDark ? 'bg-[#111113] border-zinc-800' : 'bg-[#fafafa] border-zinc-200'}`}>
                         {/* Drawer Header */}
                         <div className={`flex items-center justify-between px-6 py-5 border-b ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
                             <div>
@@ -240,39 +289,20 @@ const OrdersPage = () => {
                             <div>
                                 <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Agregar Producto</p>
                                 <div className="flex gap-2">
-                                    <Select
-                                        className="flex-1"
-                                        placeholder="Buscar producto..."
-                                        selectedKey={selectedProduct ? String(selectedProduct) : undefined}
-                                        onSelectionChange={(key) => setSelectedProduct(Number(key))}
-                                    >
-                                        <Label>Producto</Label>
-                                        <Select.Trigger>
-                                            <Select.Value />
-                                            <Select.Indicator />
-                                        </Select.Trigger>
-                                        <Select.Popover>
-                                            <ListBox>
-                                                {(products?.items || []).map((p) => (
-                                                    <ListBox.Item key={p.id} id={String(p.id)} textValue={p.name}>
-                                                        <div className="flex justify-between w-full">
-                                                            <span>{p.name}</span>
-                                                            <span className="text-xs opacity-60">${p.sale_price.toLocaleString()}</span>
-                                                        </div>
-                                                        <ListBox.ItemIndicator />
-                                                    </ListBox.Item>
-                                                ))}
-                                            </ListBox>
-                                        </Select.Popover>
-                                    </Select>
-                                    <Button
-                                        color="primary"
-                                        isDisabled={!selectedProduct}
-                                        onPress={handleAddItem}
-                                        className="cursor-pointer px-5"
-                                    >
-                                        Agregar
-                                    </Button>
+                                    <ProductSearch
+                                        products={products?.items || []}
+                                        isDark={isDark}
+                                        onSelect={(id) => {
+                                            setSelectedProduct(id);
+                                            // Auto-add on select
+                                            const existing = orderItems.find((i) => i.product_id === id);
+                                            if (existing) {
+                                                setOrderItems(orderItems.map((i) => i.product_id === id ? { ...i, quantity: i.quantity + 1 } : i));
+                                            } else {
+                                                setOrderItems([...orderItems, { product_id: id, quantity: 1 }]);
+                                            }
+                                        }}
+                                    />
                                 </div>
                             </div>
 
@@ -331,7 +361,7 @@ const OrdersPage = () => {
                             )}
 
                             {orderItems.length === 0 && (
-                                <div className={`text-center py-10 rounded-xl border-2 border-dashed ${isDark ? 'border-zinc-800 text-zinc-600' : 'border-zinc-200 text-zinc-400'}`}>
+                                <div className={`text-center py-10 rounded-xl border-2 border-dashed ${isDark ? 'border-zinc-700 text-zinc-500' : 'border-zinc-300 text-zinc-400'}`}>
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-10 h-10 mx-auto mb-2 opacity-50">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                                     </svg>
@@ -342,7 +372,7 @@ const OrdersPage = () => {
                         </div>
 
                         {/* Drawer Footer */}
-                        <div className={`px-6 py-4 border-t ${isDark ? 'border-zinc-800 bg-[#0a0a0a]' : 'border-zinc-200 bg-zinc-50'}`}>
+                        <div className={`px-6 py-4 border-t ${isDark ? 'border-zinc-800 bg-[#111113]' : 'border-zinc-200 bg-[#f4f4f5]'}`}>
                             {orderItems.length > 0 && (
                                 <div className="flex justify-between items-center mb-4">
                                     <span className={`text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{orderItems.length} productos</span>
