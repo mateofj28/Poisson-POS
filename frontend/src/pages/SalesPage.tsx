@@ -43,7 +43,7 @@ const SalesPage = () => {
 
     const { data: orders } = useQuery({
         queryKey: ['orders-for-sale'],
-        queryFn: () => orderService.getAll({ status: OrderStatus.LISTO, limit: 50 }),
+        queryFn: () => orderService.getAll({ limit: 50 }),
     });
 
     const createMutation = useMutation({
@@ -181,7 +181,10 @@ const SalesPage = () => {
                                 className="w-full"
                                 placeholder="Seleccionar pedido..."
                                 selectedKey={selectedOrder ? String(selectedOrder) : undefined}
-                                onSelectionChange={(key) => setSelectedOrder(Number(key))}
+                                onSelectionChange={(key) => {
+                                    const val = typeof key === 'string' ? key : String(key);
+                                    setSelectedOrder(Number(val) || 0);
+                                }}
                             >
                                 <Label>Pedido</Label>
                                 <Select.Trigger>
@@ -240,7 +243,7 @@ const SalesPage = () => {
                                 <input
                                     type="text"
                                     inputMode="numeric"
-                                    value={paymentAmount}
+                                    value={paymentAmount ? Number(paymentAmount).toLocaleString() : ''}
                                     onChange={(e) => setPaymentAmount(e.target.value.replace(/[^0-9]/g, ''))}
                                     placeholder="Monto"
                                     className={`flex-1 px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] ${isDark ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
