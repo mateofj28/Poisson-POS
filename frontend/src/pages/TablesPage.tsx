@@ -180,15 +180,23 @@ const TablesPage = () => {
 
             {/* Open Table Modal */}
             {openDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setOpenDialog(false)}>
-                    <div className="bg-[#18181b] rounded-2xl border border-zinc-800 w-full max-w-sm mx-4 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                        <h2 className="text-lg font-semibold text-white mb-1">Abrir Mesa {selectedTable?.number}</h2>
-                        <p className="text-sm text-zinc-500 mb-5">Selecciona el mesero asignado</p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setOpenDialog(false)}>
+                    <div className="bg-[#18181b] rounded-3xl border border-zinc-800 w-full max-w-md mx-4 p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        {/* Icon */}
+                        <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-blue-400">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                            </svg>
+                        </div>
 
+                        <h2 className="text-xl font-bold text-white text-center mb-1">Abrir Mesa {selectedTable?.number}</h2>
+                        <p className="text-sm text-zinc-400 text-center mb-8">Selecciona el mesero que atenderá esta mesa</p>
+
+                        <label className="text-sm text-zinc-400 font-medium mb-2 block">Mesero asignado</label>
                         <select
                             value={waiterId}
                             onChange={(e) => setWaiterId(Number(e.target.value))}
-                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm outline-none focus:border-blue-500 transition-colors"
+                            className="w-full px-4 py-3.5 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         >
                             <option value={0}>Seleccionar mesero...</option>
                             {waiters?.items.map((w) => (
@@ -196,14 +204,14 @@ const TablesPage = () => {
                             ))}
                         </select>
 
-                        <div className="flex gap-2 mt-5">
-                            <Button size="sm" variant="flat" className="flex-1" onPress={() => setOpenDialog(false)}>
+                        <div className="flex gap-3 mt-8">
+                            <Button size="lg" variant="flat" className="flex-1 text-base" onPress={() => setOpenDialog(false)}>
                                 Cancelar
                             </Button>
                             <Button
-                                size="sm"
+                                size="lg"
                                 color="primary"
-                                className="flex-1"
+                                className="flex-1 text-base font-semibold"
                                 isLoading={openMutation.isPending}
                                 isDisabled={!waiterId}
                                 onPress={() => selectedTable && openMutation.mutate({ id: selectedTable.id, waiter_id: waiterId })}
@@ -217,32 +225,40 @@ const TablesPage = () => {
 
             {/* Create Table Modal */}
             {createDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setCreateDialog(false)}>
-                    <div className="bg-[#18181b] rounded-2xl border border-zinc-800 w-full max-w-sm mx-4 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                        <h2 className="text-lg font-semibold text-white mb-1">Crear Mesa</h2>
-                        <p className="text-sm text-zinc-500 mb-5">Ingresa el número de la nueva mesa</p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setCreateDialog(false)}>
+                    <div className="bg-[#18181b] rounded-3xl border border-zinc-800 w-full max-w-md mx-4 p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        {/* Icon */}
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-emerald-400">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                        </div>
 
+                        <h2 className="text-xl font-bold text-white text-center mb-1">Crear Mesa</h2>
+                        <p className="text-sm text-zinc-400 text-center mb-8">Ingresa el número para la nueva mesa</p>
+
+                        <label className="text-sm text-zinc-400 font-medium mb-2 block">Número de mesa</label>
                         <input
                             type="number"
                             value={newTableNumber}
                             onChange={(e) => setNewTableNumber(e.target.value)}
-                            placeholder="Número de mesa"
-                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm placeholder-zinc-500 outline-none focus:border-blue-500 transition-colors"
+                            placeholder="Ej: 13"
+                            className="w-full px-4 py-3.5 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         />
 
-                        <div className="flex gap-2 mt-5">
-                            <Button size="sm" variant="flat" className="flex-1" onPress={() => setCreateDialog(false)}>
+                        <div className="flex gap-3 mt-8">
+                            <Button size="lg" variant="flat" className="flex-1 text-base" onPress={() => setCreateDialog(false)}>
                                 Cancelar
                             </Button>
                             <Button
-                                size="sm"
+                                size="lg"
                                 color="primary"
-                                className="flex-1"
+                                className="flex-1 text-base font-semibold"
                                 isLoading={createMutation.isPending}
                                 isDisabled={!newTableNumber}
                                 onPress={() => createMutation.mutate(Number(newTableNumber))}
                             >
-                                Crear
+                                Crear Mesa
                             </Button>
                         </div>
                     </div>
@@ -251,23 +267,30 @@ const TablesPage = () => {
 
             {/* Delete Confirm Modal */}
             {deleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)}>
-                    <div className="bg-[#18181b] rounded-2xl border border-zinc-800 w-full max-w-sm mx-4 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                        <h2 className="text-lg font-semibold text-white mb-1">Eliminar Mesa</h2>
-                        <p className="text-sm text-zinc-400 mb-5">¿Estás seguro de eliminar la mesa <span className="text-white font-medium">{deleteConfirm.number}</span>? Esta acción no se puede deshacer.</p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setDeleteConfirm(null)}>
+                    <div className="bg-[#18181b] rounded-3xl border border-zinc-800 w-full max-w-md mx-4 p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        {/* Icon */}
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-red-400">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                        </div>
 
-                        <div className="flex gap-2">
-                            <Button size="sm" variant="flat" className="flex-1" onPress={() => setDeleteConfirm(null)}>
+                        <h2 className="text-xl font-bold text-white text-center mb-1">Eliminar Mesa {deleteConfirm.number}</h2>
+                        <p className="text-sm text-zinc-400 text-center mb-8">¿Estás seguro? Esta acción no se puede deshacer y se perderán los datos asociados a esta mesa.</p>
+
+                        <div className="flex gap-3">
+                            <Button size="lg" variant="flat" className="flex-1 text-base" onPress={() => setDeleteConfirm(null)}>
                                 Cancelar
                             </Button>
                             <Button
-                                size="sm"
+                                size="lg"
                                 color="danger"
-                                className="flex-1"
+                                className="flex-1 text-base font-semibold"
                                 isLoading={deleteMutation.isPending}
                                 onPress={() => deleteConfirm && deleteMutation.mutate(deleteConfirm.id)}
                             >
-                                Eliminar
+                                Sí, eliminar
                             </Button>
                         </div>
                     </div>
