@@ -1,41 +1,10 @@
 import { useState } from 'react';
-import {
-    Box,
-    Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Button,
-    IconButton,
-    Chip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    TextField,
-    CircularProgress,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemSecondaryAction,
-    Divider,
-    Stack,
-    Alert,
-    LinearProgress,
-} from '@mui/material';
-import { Add, Visibility, Delete, Payment, Receipt, AttachMoney } from '@mui/icons-material';
+import { Button, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { saleService } from '../services/sale.service';
 import { orderService } from '../services/order.service';
 import { Sale, PaymentCreate, PaymentMethod, OrderStatus } from '../types';
+import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
 const paymentMethodLabel: Record<PaymentMethod, string> = {
@@ -56,7 +25,9 @@ const paymentMethodIcon: Record<PaymentMethod, string> = {
 
 const SalesPage = () => {
     const queryClient = useQueryClient();
-    const [createDialog, setCreateDialog] = useState(false);
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const [detailDialog, setDetailDialog] = useState<Sale | null>(null);
     const [selectedOrder, setSelectedOrder] = useState<number>(0);
     const [payments, setPayments] = useState<PaymentCreate[]>([]);
@@ -85,14 +56,14 @@ const SalesPage = () => {
             queryClient.invalidateQueries({ queryKey: ['sales'] });
             queryClient.invalidateQueries({ queryKey: ['orders'] });
             queryClient.invalidateQueries({ queryKey: ['tables'] });
-            toast.success('Venta registrada exitosamente');
-            handleCloseCreate();
+            toast.success('Venta registrada');
+            handleCloseDrawer();
         },
         onError: (err: any) => toast.error(err.response?.data?.detail || 'Error al registrar venta'),
     });
 
-    const handleCloseCreate = () => {
-        setCreateDialog(false);
+    const handleCloseDrawer = () => {
+        setDrawerOpen(false);
         setSelectedOrder(0);
         setPayments([]);
         setPaymentMethod(PaymentMethod.EFECTIVO);
@@ -109,7 +80,7 @@ const SalesPage = () => {
         setPaymentRef('');
     };
 
-    const handlePayFullAmount = () => {
+    const handlePayFull = () => {
         if (!selectedOrderData) return;
         const remaining = selectedOrderData.total - totalPayments;
         if (remaining <= 0) return;
@@ -124,323 +95,291 @@ const SalesPage = () => {
 
     const selectedOrderData = orders?.items.find((o) => o.id === selectedOrder);
     const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
-    const paymentProgress = selectedOrderData ? Math.min((totalPayments / selectedOrderData.total) * 100, 100) : 0;
     const isPaymentComplete = selectedOrderData ? totalPayments >= selectedOrderData.total : false;
 
     if (isLoading) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}><CircularProgress /></Box>;
+        return <div className="flex justify-center items-center h-64"><Spinner size="lg" /></div>;
     }
 
     return (
-        <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-                <Typography variant="h4">Ventas</Typography>
-                <Button variant="contained" startIcon={<Add />} onClick={() => setCreateDialog(true)}>
-                    Nueva Venta
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Ventas</h1>
+                <Button color="primary" className="cursor-pointer" onPress={() => setDrawerOpen(true)}>
+                    + Nueva Venta
                 </Button>
-            </Box>
+            </div>
 
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>#</TableCell>
-                            <TableCell>Pedido</TableCell>
-                            <TableCell>Mesa</TableCell>
-                            <TableCell>Empleado</TableCell>
-                            <TableCell align="right">Total</TableCell>
-                            <TableCell>Métodos</TableCell>
-                            <TableCell>Fecha</TableCell>
-                            <TableCell align="right">Acciones</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
+            {/* Table */}
+            <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                <table className="w-full">
+                    <thead className={isDark ? 'bg-zinc-900' : 'bg-zinc-50'}>
+                        <tr>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>#</th>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Pedido</th>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Mesa</th>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Empleado</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Total</th>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Métodos</th>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Fecha</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
                         {data?.items.map((sale) => (
-                            <TableRow key={sale.id}>
-                                <TableCell>{sale.id}</TableCell>
-                                <TableCell>#{sale.order_id}</TableCell>
-                                <TableCell>Mesa {sale.table_number}</TableCell>
-                                <TableCell>{sale.employee_name || '-'}</TableCell>
-                                <TableCell align="right">${sale.total.toLocaleString()}</TableCell>
-                                <TableCell>
-                                    {sale.payments.map((p) => (
-                                        <Chip key={p.id} label={paymentMethodLabel[p.payment_method]} size="small" sx={{ mr: 0.5 }} />
-                                    ))}
-                                </TableCell>
-                                <TableCell>{new Date(sale.sale_date).toLocaleString('es-CO')}</TableCell>
-                                <TableCell align="right">
-                                    <IconButton size="small" onClick={() => setDetailDialog(sale)}>
-                                        <Visibility />
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
+                            <tr key={sale.id} className={`transition-colors ${isDark ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-white' : 'text-zinc-900'}`}>{sale.id}</td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>#{sale.order_id}</td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-white' : 'text-zinc-900'}`}>Mesa {sale.table_number}</td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>{sale.employee_name || '-'}</td>
+                                <td className={`px-4 py-3 text-sm text-right font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>${sale.total.toLocaleString()}</td>
+                                <td className="px-4 py-3">
+                                    <div className="flex gap-1 flex-wrap">
+                                        {sale.payments.map((p) => (
+                                            <Chip key={p.id} size="sm" variant="flat">{paymentMethodIcon[p.payment_method]} {paymentMethodLabel[p.payment_method]}</Chip>
+                                        ))}
+                                    </div>
+                                </td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(sale.sale_date).toLocaleString('es-CO')}</td>
+                                <td className="px-4 py-3 text-right">
+                                    <Button size="sm" variant="flat" className="cursor-pointer" onPress={() => setDetailDialog(sale)}>Ver</Button>
+                                </td>
+                            </tr>
                         ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        {(!data?.items || data.items.length === 0) && (
+                            <tr>
+                                <td colSpan={8} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>No hay ventas registradas</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
-            {/* Create Sale Dialog */}
-            <Dialog open={createDialog} onClose={handleCloseCreate} maxWidth="sm" fullWidth>
-                <DialogTitle sx={{ pb: 1 }}>
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Receipt sx={{ color: 'primary.main' }} />
-                        <Typography variant="h6" fontWeight={700}>Nueva Venta</Typography>
-                    </Stack>
-                </DialogTitle>
-                <DialogContent>
-                    <Stack spacing={3} sx={{ mt: 1 }}>
-                        {/* Order Selection */}
-                        <FormControl fullWidth>
-                            <InputLabel>Seleccionar Pedido</InputLabel>
+            {/* Drawer - Nueva Venta */}
+            {drawerOpen && (
+                <>
+                    <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={handleCloseDrawer}></div>
+                    <div className={`fixed top-0 right-0 z-50 h-full w-full max-w-md flex flex-col shadow-2xl border-l ${isDark ? 'bg-[#111113] border-zinc-800' : 'bg-[#fafafa] border-zinc-200'}`}>
+                        {/* Header */}
+                        <div className={`flex items-center justify-between px-6 py-5 border-b ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                            <div>
+                                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Nueva Venta</h2>
+                                <p className={`text-xs mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Registra el cobro de un pedido</p>
+                            </div>
+                            <button onClick={handleCloseDrawer} className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-500'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+                            {/* Order Select */}
                             <Select
-                                value={selectedOrder}
-                                onChange={(e) => setSelectedOrder(Number(e.target.value))}
-                                label="Seleccionar Pedido"
+                                className="w-full"
+                                placeholder="Seleccionar pedido..."
+                                selectedKey={selectedOrder ? String(selectedOrder) : undefined}
+                                onSelectionChange={(key) => setSelectedOrder(Number(key))}
                             >
-                                {orders?.items.map((o) => (
-                                    <MenuItem key={o.id} value={o.id}>
-                                        <Stack direction="row" justifyContent="space-between" width="100%" alignItems="center">
-                                            <Typography>Pedido #{o.id} — Mesa {o.table_number}</Typography>
-                                            <Typography fontWeight={600} color="primary.main">${o.total.toLocaleString()}</Typography>
-                                        </Stack>
-                                    </MenuItem>
-                                ))}
+                                <Label>Pedido</Label>
+                                <Select.Trigger>
+                                    <Select.Value />
+                                    <Select.Indicator />
+                                </Select.Trigger>
+                                <Select.Popover>
+                                    <ListBox>
+                                        {(orders?.items || []).map((o) => (
+                                            <ListBox.Item key={o.id} id={String(o.id)} textValue={`Pedido #${o.id}`}>
+                                                Pedido #{o.id} — Mesa {o.table_number} — ${o.total.toLocaleString()}
+                                                <ListBox.ItemIndicator />
+                                            </ListBox.Item>
+                                        ))}
+                                    </ListBox>
+                                </Select.Popover>
                             </Select>
-                        </FormControl>
 
-                        {/* Order Summary */}
-                        {selectedOrderData && (
-                            <Paper
-                                variant="outlined"
-                                sx={{
-                                    p: 2,
-                                    borderColor: 'primary.main',
-                                    borderStyle: 'solid',
-                                    background: 'rgba(10, 132, 255, 0.04)',
-                                }}
+                            {/* Order Summary */}
+                            {selectedOrderData && (
+                                <div className={`p-4 rounded-xl border ${isDark ? 'border-blue-500/30 bg-blue-500/5' : 'border-blue-200 bg-blue-50'}`}>
+                                    <p className={`text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Total a cobrar</p>
+                                    <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${selectedOrderData.total.toLocaleString()}</p>
+                                </div>
+                            )}
+
+                            <div className={`h-px ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}></div>
+
+                            {/* Payment Method */}
+                            <p className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Agregar Pago</p>
+
+                            <Select
+                                className="w-full"
+                                placeholder="Método..."
+                                selectedKey={paymentMethod}
+                                onSelectionChange={(key) => setPaymentMethod(key as PaymentMethod)}
                             >
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                    <Box>
-                                        <Typography variant="body2" color="text.secondary">Total a cobrar</Typography>
-                                        <Typography variant="h5" fontWeight={700}>${selectedOrderData.total.toLocaleString()}</Typography>
-                                    </Box>
-                                    <Box textAlign="right">
-                                        <Typography variant="body2" color="text.secondary">Items</Typography>
-                                        <Typography variant="h6" fontWeight={600}>{selectedOrderData.items.length}</Typography>
-                                    </Box>
-                                </Stack>
-                            </Paper>
-                        )}
+                                <Label>Método de pago</Label>
+                                <Select.Trigger>
+                                    <Select.Value />
+                                    <Select.Indicator />
+                                </Select.Trigger>
+                                <Select.Popover>
+                                    <ListBox>
+                                        {Object.values(PaymentMethod).map((m) => (
+                                            <ListBox.Item key={m} id={m} textValue={paymentMethodLabel[m]}>
+                                                {paymentMethodIcon[m]} {paymentMethodLabel[m]}
+                                                <ListBox.ItemIndicator />
+                                            </ListBox.Item>
+                                        ))}
+                                    </ListBox>
+                                </Select.Popover>
+                            </Select>
 
-                        <Divider />
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={paymentAmount}
+                                    onChange={(e) => setPaymentAmount(e.target.value.replace(/[^0-9]/g, ''))}
+                                    placeholder="Monto"
+                                    className={`flex-1 px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] ${isDark ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                />
+                                <input
+                                    value={paymentRef}
+                                    onChange={(e) => setPaymentRef(e.target.value)}
+                                    placeholder="Ref (opcional)"
+                                    className={`flex-1 px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                />
+                            </div>
 
-                        {/* Payment Section */}
-                        <Box>
-                            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                                <Payment sx={{ color: 'primary.main', fontSize: 20 }} />
-                                <Typography variant="subtitle1" fontWeight={600}>Métodos de Pago</Typography>
-                            </Stack>
-
-                            <Stack spacing={2}>
-                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                                    <FormControl size="small" sx={{ minWidth: 140 }}>
-                                        <InputLabel>Método</InputLabel>
-                                        <Select
-                                            value={paymentMethod}
-                                            onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                                            label="Método"
-                                        >
-                                            {Object.values(PaymentMethod).map((m) => (
-                                                <MenuItem key={m} value={m}>
-                                                    {paymentMethodIcon[m]} {paymentMethodLabel[m]}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                    <TextField
-                                        size="small"
-                                        label="Monto"
-                                        type="number"
-                                        value={paymentAmount}
-                                        onChange={(e) => setPaymentAmount(e.target.value)}
-                                        placeholder="0"
-                                        sx={{ flex: 1 }}
-                                    />
-                                    <TextField
-                                        size="small"
-                                        label="Referencia"
-                                        value={paymentRef}
-                                        onChange={(e) => setPaymentRef(e.target.value)}
-                                        placeholder="Opcional"
-                                        sx={{ flex: 1 }}
-                                    />
-                                </Stack>
-
-                                <Stack direction="row" spacing={1}>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleAddPayment}
-                                        disabled={!paymentAmount || Number(paymentAmount) <= 0}
-                                        startIcon={<Add />}
-                                        sx={{ flex: 1 }}
-                                    >
-                                        Agregar Pago
+                            <div className="flex gap-2">
+                                <Button variant="flat" className="flex-1 cursor-pointer" onPress={handleAddPayment} isDisabled={!paymentAmount || Number(paymentAmount) <= 0}>
+                                    + Agregar Pago
+                                </Button>
+                                {selectedOrderData && !isPaymentComplete && (
+                                    <Button color="primary" className="flex-1 cursor-pointer" onPress={handlePayFull}>
+                                        Pagar Todo (${(selectedOrderData.total - totalPayments).toLocaleString()})
                                     </Button>
-                                    {selectedOrderData && !isPaymentComplete && (
-                                        <Button
-                                            variant="contained"
-                                            onClick={handlePayFullAmount}
-                                            startIcon={<AttachMoney />}
-                                            size="small"
-                                            sx={{ whiteSpace: 'nowrap' }}
-                                        >
-                                            Pagar restante (${(selectedOrderData.total - totalPayments).toLocaleString()})
-                                        </Button>
-                                    )}
-                                </Stack>
-                            </Stack>
-                        </Box>
-
-                        {/* Payments List */}
-                        {payments.length > 0 && (
-                            <Paper variant="outlined" sx={{ p: 1.5 }}>
-                                <List dense disablePadding>
-                                    {payments.map((p, index) => (
-                                        <ListItem key={index} sx={{ px: 1 }}>
-                                            <ListItemText
-                                                primary={
-                                                    <Stack direction="row" spacing={1} alignItems="center">
-                                                        <Typography variant="body2">{paymentMethodIcon[p.payment_method]}</Typography>
-                                                        <Typography variant="body1" fontWeight={500}>
-                                                            {paymentMethodLabel[p.payment_method]}
-                                                        </Typography>
-                                                        <Typography variant="body1" fontWeight={700} color="primary.main">
-                                                            ${p.amount.toLocaleString()}
-                                                        </Typography>
-                                                    </Stack>
-                                                }
-                                                secondary={p.reference ? `Ref: ${p.reference}` : undefined}
-                                            />
-                                            <ListItemSecondaryAction>
-                                                <IconButton edge="end" size="small" onClick={() => handleRemovePayment(index)}>
-                                                    <Delete fontSize="small" color="error" />
-                                                </IconButton>
-                                            </ListItemSecondaryAction>
-                                        </ListItem>
-                                    ))}
-                                </List>
-
-                                <Divider sx={{ my: 1.5 }} />
-
-                                {/* Payment Progress */}
-                                <Box sx={{ px: 1 }}>
-                                    <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
-                                        <Typography variant="body2" color="text.secondary">Progreso de pago</Typography>
-                                        <Typography
-                                            variant="body2"
-                                            fontWeight={600}
-                                            color={isPaymentComplete ? 'success.main' : 'warning.main'}
-                                        >
-                                            ${totalPayments.toLocaleString()} / ${selectedOrderData?.total.toLocaleString() || '0'}
-                                        </Typography>
-                                    </Stack>
-                                    <LinearProgress
-                                        variant="determinate"
-                                        value={paymentProgress}
-                                        color={isPaymentComplete ? 'success' : 'primary'}
-                                        sx={{ height: 6, borderRadius: 3 }}
-                                    />
-                                </Box>
-
-                                {isPaymentComplete && (
-                                    <Alert severity="success" sx={{ mt: 1.5, borderRadius: 2 }}>
-                                        Pago completo ✓
-                                    </Alert>
                                 )}
-                            </Paper>
-                        )}
+                            </div>
 
-                        {/* Notes */}
-                        <TextField
-                            fullWidth
-                            label="Notas de la venta"
-                            value={saleNotes}
-                            onChange={(e) => setSaleNotes(e.target.value)}
-                            placeholder="Observaciones opcionales..."
-                            multiline
-                            rows={2}
-                        />
-                    </Stack>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2.5 }}>
-                    <Button onClick={handleCloseCreate}>Cancelar</Button>
-                    <Button
-                        variant="contained"
-                        onClick={() => createMutation.mutate()}
-                        disabled={!selectedOrder || payments.length === 0 || !isPaymentComplete || createMutation.isPending}
-                        startIcon={<Receipt />}
-                    >
-                        {createMutation.isPending ? 'Registrando...' : 'Registrar Venta'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                            {/* Payments List */}
+                            {payments.length > 0 && (
+                                <div className="space-y-2">
+                                    {payments.map((p, index) => (
+                                        <div key={index} className={`flex items-center justify-between p-3 rounded-xl border ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-zinc-200 bg-zinc-50'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg">{paymentMethodIcon[p.payment_method]}</span>
+                                                <div>
+                                                    <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{paymentMethodLabel[p.payment_method]}</p>
+                                                    {p.reference && <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Ref: {p.reference}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${p.amount.toLocaleString()}</span>
+                                                <button onClick={() => handleRemovePayment(index)} className="text-red-400 hover:text-red-300 cursor-pointer">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
 
-            {/* Detail Dialog */}
-            <Dialog open={!!detailDialog} onClose={() => setDetailDialog(null)} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Receipt sx={{ color: 'primary.main' }} />
-                        <Typography variant="h6" fontWeight={700}>Venta #{detailDialog?.id}</Typography>
-                    </Stack>
-                </DialogTitle>
-                <DialogContent>
-                    <Stack spacing={2}>
-                        <Paper variant="outlined" sx={{ p: 2 }}>
-                            <Stack spacing={0.5}>
-                                <Typography variant="body2" color="text.secondary">Pedido: #{detailDialog?.order_id}</Typography>
-                                <Typography variant="body2" color="text.secondary">Mesa: {detailDialog?.table_number}</Typography>
-                                <Typography variant="body2" color="text.secondary">Empleado: {detailDialog?.employee_name}</Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Fecha: {detailDialog && new Date(detailDialog.sale_date).toLocaleString('es-CO')}
-                                </Typography>
-                            </Stack>
-                        </Paper>
+                                    {/* Progress */}
+                                    {selectedOrderData && (
+                                        <div className={`p-3 rounded-xl ${isPaymentComplete ? (isDark ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-emerald-50 border border-emerald-200') : (isDark ? 'bg-zinc-900' : 'bg-zinc-100')}`}>
+                                            <div className="flex justify-between text-xs mb-1.5">
+                                                <span className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Pagado</span>
+                                                <span className={`font-semibold ${isPaymentComplete ? 'text-emerald-400' : (isDark ? 'text-white' : 'text-zinc-900')}`}>
+                                                    ${totalPayments.toLocaleString()} / ${selectedOrderData.total.toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
+                                                <div className={`h-full rounded-full transition-all ${isPaymentComplete ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${Math.min((totalPayments / selectedOrderData.total) * 100, 100)}%` }}></div>
+                                            </div>
+                                            {isPaymentComplete && <p className="text-xs text-emerald-400 mt-1.5 font-medium">✓ Pago completo</p>}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
-                        <Box>
-                            <Typography variant="subtitle2" sx={{ mb: 1 }} fontWeight={600}>Pagos realizados:</Typography>
-                            <List dense disablePadding>
-                                {detailDialog?.payments.map((p) => (
-                                    <ListItem key={p.id} sx={{ px: 1 }}>
-                                        <ListItemText
-                                            primary={
-                                                <Stack direction="row" spacing={1} alignItems="center">
-                                                    <Typography>{paymentMethodIcon[p.payment_method]}</Typography>
-                                                    <Typography fontWeight={500}>{paymentMethodLabel[p.payment_method]}</Typography>
-                                                </Stack>
-                                            }
-                                            secondary={p.reference ? `Ref: ${p.reference}` : undefined}
-                                        />
-                                        <Typography variant="body1" fontWeight={600}>${p.amount.toLocaleString()}</Typography>
-                                    </ListItem>
+                            {/* Notes */}
+                            <input
+                                value={saleNotes}
+                                onChange={(e) => setSaleNotes(e.target.value)}
+                                placeholder="Notas de la venta (opcional)"
+                                className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                            />
+                        </div>
+
+                        {/* Footer */}
+                        <div className={`px-6 py-4 border-t ${isDark ? 'border-zinc-800 bg-[#111113]' : 'border-zinc-200 bg-[#f4f4f5]'}`}>
+                            <div className="flex gap-3">
+                                <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={handleCloseDrawer}>
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    size="lg"
+                                    color="primary"
+                                    className="flex-1 cursor-pointer font-semibold"
+                                    isLoading={createMutation.isPending}
+                                    isDisabled={!selectedOrder || payments.length === 0 || !isPaymentComplete}
+                                    onPress={() => createMutation.mutate()}
+                                >
+                                    Registrar Venta
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Detail Modal - Receipt Style */}
+            {detailDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setDetailDialog(null)}>
+                    <div className="relative w-full max-w-[340px] mx-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-white rounded-sm shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden">
+                            <div className="h-3 bg-white" style={{ backgroundImage: 'radial-gradient(circle, transparent 40%, white 40%)', backgroundSize: '12px 12px', backgroundPosition: '0 -6px' }}></div>
+                            <div className="text-center px-6 pt-2 pb-4 border-b border-dashed border-zinc-300">
+                                <p className="text-xl mb-0.5">🐟</p>
+                                <h2 className="text-base font-bold text-zinc-900 tracking-tight">POISSON POS</h2>
+                                <p className="text-[10px] text-zinc-400 mt-0.5 font-mono">Venta #{String(detailDialog.id).padStart(4, '0')}</p>
+                                <p className="text-[10px] text-zinc-400 font-mono">{new Date(detailDialog.sale_date).toLocaleString('es-CO')}</p>
+                            </div>
+                            <div className="px-6 py-3 text-[11px] font-mono text-zinc-600 space-y-0.5 border-b border-dashed border-zinc-300">
+                                <div className="flex justify-between"><span>Pedido:</span><span className="font-semibold text-zinc-900">#{detailDialog.order_id}</span></div>
+                                <div className="flex justify-between"><span>Mesa:</span><span className="font-semibold text-zinc-900">{detailDialog.table_number || '-'}</span></div>
+                                <div className="flex justify-between"><span>Empleado:</span><span className="font-semibold text-zinc-900">{detailDialog.employee_name || '-'}</span></div>
+                            </div>
+                            <div className="px-6 py-3 border-b border-dashed border-zinc-300">
+                                <p className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest mb-2">Pagos</p>
+                                {detailDialog.payments.map((p) => (
+                                    <div key={p.id} className="flex justify-between text-[11px] font-mono mb-1">
+                                        <span className="text-zinc-700">{paymentMethodIcon[p.payment_method]} {paymentMethodLabel[p.payment_method]}</span>
+                                        <span className="font-semibold text-zinc-900">${p.amount.toLocaleString()}</span>
+                                    </div>
                                 ))}
-                            </List>
-                        </Box>
-
-                        <Divider />
-
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="h6" fontWeight={700}>Total</Typography>
-                            <Typography variant="h5" fontWeight={700} color="primary.main">
-                                ${detailDialog?.total.toLocaleString()}
-                            </Typography>
-                        </Stack>
-                    </Stack>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={() => setDetailDialog(null)}>Cerrar</Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+                            </div>
+                            <div className="px-6 py-4">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-mono font-bold text-zinc-900 uppercase tracking-wider">Total</span>
+                                    <span className="text-2xl font-bold text-zinc-900 font-mono">${detailDialog.total.toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div className="px-6 py-3 text-center border-t border-dashed border-zinc-300">
+                                <p className="text-[9px] font-mono text-zinc-400">¡Gracias por su compra!</p>
+                            </div>
+                            <div className="h-3 bg-white" style={{ backgroundImage: 'radial-gradient(circle, transparent 40%, white 40%)', backgroundSize: '12px 12px', backgroundPosition: '0 6px' }}></div>
+                        </div>
+                        <button onClick={() => setDetailDialog(null)} className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center cursor-pointer text-white hover:bg-zinc-700 transition-colors shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
