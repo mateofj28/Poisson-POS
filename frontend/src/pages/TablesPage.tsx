@@ -1,10 +1,11 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tableService } from '../services/table.service';
 import { employeeService } from '../services/employee.service';
 import { Table, TableStatus } from '../types';
 import { useAuthStore } from '../store/auth.store';
+import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
 const statusConfig: Record<TableStatus, { label: string; color: string; bg: string; border: string }> = {
@@ -16,6 +17,8 @@ const statusConfig: Record<TableStatus, { label: string; color: string; bg: stri
 const TablesPage = () => {
     const queryClient = useQueryClient();
     const { employee } = useAuthStore();
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
     const [openDialog, setOpenDialog] = useState(false);
     const [createDialog, setCreateDialog] = useState(false);
     const [selectedTable, setSelectedTable] = useState<Table | null>(null);
@@ -100,7 +103,7 @@ const TablesPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-white">Mesas</h1>
+                    <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Mesas</h1>
                     <p className="text-sm text-zinc-500 mt-0.5">{data?.items.length} mesas en total</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -156,7 +159,7 @@ const TablesPage = () => {
 
                             {/* Table Number */}
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-white mb-2">{table.number}</p>
+                                <p className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-zinc-900'}`}>{table.number}</p>
                                 <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium ${config.color} ${config.bg} border ${config.border}`}>
                                     {config.label}
                                 </span>
@@ -169,7 +172,7 @@ const TablesPage = () => {
                                         <p className="text-[11px] text-zinc-400 truncate">{table.waiter_name}</p>
                                     )}
                                     {table.occupation_time && (
-                                        <p className="text-[10px] text-zinc-500">⏱ {table.occupation_time}</p>
+                                        <p className="text-[10px] text-zinc-500">â± {table.occupation_time}</p>
                                     )}
                                 </div>
                             )}
@@ -181,7 +184,7 @@ const TablesPage = () => {
             {/* Open Table Modal */}
             {openDialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setOpenDialog(false)}>
-                    <div className="bg-[#18181b] rounded-3xl border border-zinc-800 w-full max-w-md mx-4 p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className={`rounded-3xl border w-full max-w-md mx-4 p-8 shadow-2xl ${isDark ? "bg-[#18181b] border-zinc-800" : "bg-white border-zinc-200"}`} onClick={(e) => e.stopPropagation()}>
                         {/* Icon */}
                         <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-5">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-blue-400">
@@ -189,8 +192,8 @@ const TablesPage = () => {
                             </svg>
                         </div>
 
-                        <h2 className="text-xl font-bold text-white text-center mb-1">Abrir Mesa {selectedTable?.number}</h2>
-                        <p className="text-sm text-zinc-400 text-center mb-8">Selecciona el mesero que atenderá esta mesa</p>
+                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>Abrir Mesa {selectedTable?.number}</h2>
+                        <p className={`text-sm text-center mb-8 ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>Selecciona el mesero que atenderÃ¡ esta mesa</p>
 
                         <Select
                             className="w-full"
@@ -237,7 +240,7 @@ const TablesPage = () => {
             {/* Create Table Modal */}
             {createDialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setCreateDialog(false)}>
-                    <div className="bg-[#18181b] rounded-3xl border border-zinc-800 w-full max-w-md mx-4 p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className={`rounded-3xl border w-full max-w-md mx-4 p-8 shadow-2xl ${isDark ? "bg-[#18181b] border-zinc-800" : "bg-white border-zinc-200"}`} onClick={(e) => e.stopPropagation()}>
                         {/* Icon */}
                         <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-5">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-emerald-400">
@@ -245,10 +248,10 @@ const TablesPage = () => {
                             </svg>
                         </div>
 
-                        <h2 className="text-xl font-bold text-white text-center mb-1">Crear Mesa</h2>
-                        <p className="text-sm text-zinc-400 text-center mb-8">Ingresa el número para la nueva mesa</p>
+                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>Crear Mesa</h2>
+                        <p className={`text-sm text-center mb-8 ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>Ingresa el nÃºmero para la nueva mesa</p>
 
-                        <label className="text-sm text-zinc-400 font-medium mb-2 block">Número de mesa</label>
+                        <label className={`text-sm font-medium mb-2 block ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>NÃºmero de mesa</label>
                         <input
                             type="text"
                             inputMode="numeric"
@@ -259,7 +262,7 @@ const TablesPage = () => {
                                 setNewTableNumber(val);
                             }}
                             placeholder="Ej: 13"
-                            className="w-full px-4 py-3.5 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className={`w-full px-4 py-3.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? "bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500" : "bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400"}`}
                         />
 
                         <div className="flex gap-3 mt-8">
@@ -284,7 +287,7 @@ const TablesPage = () => {
             {/* Delete Confirm Modal */}
             {deleteConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setDeleteConfirm(null)}>
-                    <div className="bg-[#18181b] rounded-3xl border border-zinc-800 w-full max-w-md mx-4 p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className={`rounded-3xl border w-full max-w-md mx-4 p-8 shadow-2xl ${isDark ? "bg-[#18181b] border-zinc-800" : "bg-white border-zinc-200"}`} onClick={(e) => e.stopPropagation()}>
                         {/* Icon */}
                         <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-5">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-red-400">
@@ -292,8 +295,8 @@ const TablesPage = () => {
                             </svg>
                         </div>
 
-                        <h2 className="text-xl font-bold text-white text-center mb-1">Eliminar Mesa {deleteConfirm.number}</h2>
-                        <p className="text-sm text-zinc-400 text-center mb-8">¿Estás seguro? Esta acción no se puede deshacer y se perderán los datos asociados a esta mesa.</p>
+                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? "text-white" : "text-zinc-900"}`}>Eliminar Mesa {deleteConfirm.number}</h2>
+                        <p className={`text-sm text-center mb-8 ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>¿Estás seguro? Esta acción no se puede deshacer y se perderán los datos asociados a esta mesa.</p>
 
                         <div className="flex gap-3">
                             <Button size="lg" variant="flat" className="flex-1 text-base" onPress={() => setDeleteConfirm(null)}>
@@ -306,7 +309,7 @@ const TablesPage = () => {
                                 isLoading={deleteMutation.isPending}
                                 onPress={() => deleteConfirm && deleteMutation.mutate(deleteConfirm.id)}
                             >
-                                Sí, eliminar
+                                SÃ­, eliminar
                             </Button>
                         </div>
                     </div>
@@ -317,3 +320,4 @@ const TablesPage = () => {
 };
 
 export default TablesPage;
+
