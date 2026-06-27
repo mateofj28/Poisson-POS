@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Button, Chip } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { useAuthStore } from '../store/auth.store';
+import { useThemeStore } from '../store/theme.store';
 import { authService } from '../services/auth.service';
 
 interface NavItem {
@@ -58,6 +59,7 @@ const MainLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { employee, setEmployee, logout, isAuthenticated } = useAuthStore();
+    const { theme, toggleTheme } = useThemeStore();
 
     useEffect(() => {
         if (isAuthenticated && !employee) {
@@ -76,27 +78,29 @@ const MainLayout = () => {
         return employee && item.roles.includes(employee.role);
     });
 
+    const isDark = theme === 'dark';
+
     return (
-        <div className="flex h-screen bg-black overflow-hidden">
+        <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-black' : 'bg-white'}`}>
             {/* Sidebar */}
-            <aside className="w-[220px] flex flex-col bg-[#0a0a0a] border-r border-zinc-800/50 shrink-0">
+            <aside className={`w-[220px] flex flex-col shrink-0 border-r ${isDark ? 'bg-[#0a0a0a] border-zinc-800/50' : 'bg-[#f8f9fa] border-zinc-200'}`}>
                 {/* Logo */}
-                <div className="px-4 py-5 border-b border-zinc-800/50">
+                <div className={`px-4 py-5 border-b ${isDark ? 'border-zinc-800/50' : 'border-zinc-200'}`}>
                     <div className="flex items-center gap-2">
                         <span className="text-lg">🐟</span>
-                        <span className="text-sm font-semibold text-white">Poisson POS</span>
+                        <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Poisson POS</span>
                     </div>
                 </div>
 
                 {/* User */}
-                <div className="px-4 py-3 border-b border-zinc-800/50">
+                <div className={`px-4 py-3 border-b ${isDark ? 'border-zinc-800/50' : 'border-zinc-200'}`}>
                     <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-semibold text-white">
                             {employee?.first_name?.[0] || 'U'}
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-xs font-medium text-white truncate">{employee ? `${employee.first_name} ${employee.last_name}` : ''}</p>
-                            <p className="text-[10px] text-zinc-500 uppercase">{employee?.role}</p>
+                            <p className={`text-xs font-medium truncate ${isDark ? 'text-white' : 'text-zinc-900'}`}>{employee ? `${employee.first_name} ${employee.last_name}` : ''}</p>
+                            <p className={`text-[10px] uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>{employee?.role}</p>
                         </div>
                     </div>
                 </div>
@@ -110,11 +114,11 @@ const MainLayout = () => {
                                 key={item.path}
                                 onClick={() => navigate(item.path)}
                                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${isActive
-                                        ? 'bg-zinc-800 text-white'
-                                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                                        ? isDark ? 'bg-zinc-800 text-white' : 'bg-zinc-200 text-zinc-900'
+                                        : isDark ? 'text-zinc-400 hover:text-white hover:bg-zinc-800/50' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
                                     }`}
                             >
-                                <span className={isActive ? 'text-white' : 'text-zinc-500'}>{item.icon}</span>
+                                <span className={isActive ? (isDark ? 'text-white' : 'text-zinc-900') : (isDark ? 'text-zinc-500' : 'text-zinc-400')}>{item.icon}</span>
                                 {item.label}
                             </button>
                         );
@@ -122,10 +126,10 @@ const MainLayout = () => {
                 </nav>
 
                 {/* Logout */}
-                <div className="px-2 py-3 border-t border-zinc-800/50">
+                <div className={`px-2 py-3 border-t ${isDark ? 'border-zinc-800/50' : 'border-zinc-200'}`}>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${isDark ? 'text-zinc-400 hover:text-white hover:bg-zinc-800/50' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'}`}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
@@ -138,9 +142,27 @@ const MainLayout = () => {
             {/* Main Content */}
             <main className="flex-1 flex flex-col overflow-hidden">
                 {/* Top bar */}
-                <header className="h-14 flex items-center justify-end px-6 border-b border-zinc-800/50 bg-[#0a0a0a] shrink-0">
-                    <div className="flex items-center gap-3">
-                        <span className="text-xs text-zinc-500">{employee?.first_name} {employee?.last_name}</span>
+                <header className={`h-14 flex items-center justify-between px-6 border-b shrink-0 ${isDark ? 'bg-[#0a0a0a] border-zinc-800/50' : 'bg-[#f8f9fa] border-zinc-200'}`}>
+                    <div></div>
+                    <div className="flex items-center gap-4">
+                        {/* Theme Toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-200 text-zinc-600'}`}
+                            title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                        >
+                            {isDark ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-[18px] h-[18px]">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                                </svg>
+                            )}
+                        </button>
+
+                        <span className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>{employee?.first_name} {employee?.last_name}</span>
                         <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-semibold text-white">
                             {employee?.first_name?.[0] || 'U'}
                         </div>
@@ -148,7 +170,7 @@ const MainLayout = () => {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 overflow-y-auto p-6 bg-[#09090b]">
+                <div className={`flex-1 overflow-y-auto p-6 ${isDark ? 'bg-[#09090b]' : 'bg-white'}`}>
                     <Outlet />
                 </div>
             </main>
