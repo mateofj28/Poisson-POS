@@ -399,70 +399,85 @@ const OrdersPage = () => {
                 </>
             )}
 
-            {/* Detail Modal - Invoice Style */}
+            {/* Detail Modal - Invoice/Receipt Style */}
             {detailDialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setDetailDialog(null)}>
-                    <div className={`rounded-3xl border w-full max-w-sm mx-4 shadow-2xl overflow-hidden ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
-                        {/* Receipt Header */}
-                        <div className={`px-6 pt-6 pb-4 text-center border-b border-dashed ${isDark ? 'border-zinc-700' : 'border-zinc-300'}`}>
-                            <p className="text-2xl mb-1">🐟</p>
-                            <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Poisson POS</h2>
-                            <p className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Pedido #{detailDialog.id}</p>
-                        </div>
+                    <div className="relative w-full max-w-[340px] mx-4" onClick={(e) => e.stopPropagation()}>
+                        {/* Paper receipt - always white like real paper */}
+                        <div className="bg-white rounded-sm shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden">
+                            {/* Zigzag top */}
+                            <div className="h-3 bg-white" style={{ backgroundImage: 'radial-gradient(circle, transparent 40%, white 40%)', backgroundSize: '12px 12px', backgroundPosition: '0 -6px' }}></div>
 
-                        {/* Receipt Info */}
-                        <div className={`px-6 py-3 text-xs space-y-1 border-b border-dashed ${isDark ? 'border-zinc-700 text-zinc-400' : 'border-zinc-300 text-zinc-500'}`}>
-                            <div className="flex justify-between">
-                                <span>Mesa:</span>
-                                <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{detailDialog.table_number || detailDialog.table_id}</span>
+                            {/* Header */}
+                            <div className="text-center px-6 pt-2 pb-4 border-b border-dashed border-zinc-300">
+                                <p className="text-xl mb-0.5">🐟</p>
+                                <h2 className="text-base font-bold text-zinc-900 tracking-tight">POISSON POS</h2>
+                                <p className="text-[10px] text-zinc-400 mt-0.5 font-mono">Pedido #{String(detailDialog.id).padStart(4, '0')}</p>
+                                <p className="text-[10px] text-zinc-400 font-mono">{new Date(detailDialog.order_date).toLocaleString('es-CO')}</p>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Empleado:</span>
-                                <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{detailDialog.employee_name || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Fecha:</span>
-                                <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{new Date(detailDialog.order_date).toLocaleString('es-CO')}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>Estado:</span>
-                                <Chip color={statusColor[detailDialog.status]} size="sm" variant="flat">{statusLabel[detailDialog.status]}</Chip>
-                            </div>
-                        </div>
 
-                        {/* Receipt Items */}
-                        <div className={`px-6 py-3 border-b border-dashed ${isDark ? 'border-zinc-700' : 'border-zinc-300'}`}>
-                            <div className={`flex justify-between text-xs font-semibold uppercase tracking-wider mb-2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                <span>Producto</span>
-                                <span>Subtotal</span>
+                            {/* Info */}
+                            <div className="px-6 py-3 text-[11px] font-mono text-zinc-600 space-y-0.5 border-b border-dashed border-zinc-300">
+                                <div className="flex justify-between">
+                                    <span>Mesa:</span>
+                                    <span className="font-semibold text-zinc-900">{detailDialog.table_number || detailDialog.table_id}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Atendió:</span>
+                                    <span className="font-semibold text-zinc-900">{detailDialog.employee_name || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Estado:</span>
+                                    <span className="font-semibold text-zinc-900">{statusLabel[detailDialog.status]}</span>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                {detailDialog.items.map((item) => (
-                                    <div key={item.id} className="flex justify-between text-sm">
-                                        <div>
-                                            <span className={isDark ? 'text-white' : 'text-zinc-900'}>{item.product_name || `#${item.product_id}`}</span>
-                                            <span className={`text-xs ml-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>x{item.quantity}</span>
+
+                            {/* Items */}
+                            <div className="px-6 py-3 border-b border-dashed border-zinc-300">
+                                <div className="flex justify-between text-[9px] font-mono text-zinc-400 uppercase tracking-widest mb-2">
+                                    <span>Ítem</span>
+                                    <span>Valor</span>
+                                </div>
+                                <div className="space-y-1.5">
+                                    {detailDialog.items.map((item) => (
+                                        <div key={item.id} className="flex justify-between text-[11px] font-mono">
+                                            <span className="text-zinc-700">
+                                                {item.product_name || `#${item.product_id}`}
+                                                <span className="text-zinc-400 ml-1">x{item.quantity}</span>
+                                            </span>
+                                            <span className="font-semibold text-zinc-900">${item.subtotal.toLocaleString()}</span>
                                         </div>
-                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>${item.subtotal.toLocaleString()}</span>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
+
+                            {/* Total */}
+                            <div className="px-6 py-4 border-b border-dashed border-zinc-300">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-mono font-bold text-zinc-900 uppercase tracking-wider">Total</span>
+                                    <span className="text-2xl font-bold text-zinc-900 font-mono">${detailDialog.total.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-6 py-4 text-center">
+                                <p className="text-[9px] font-mono text-zinc-400">¡Gracias por su compra!</p>
+                                <p className="text-[9px] font-mono text-zinc-300 mt-0.5">--- poisson-pos.vercel.app ---</p>
+                            </div>
+
+                            {/* Zigzag bottom */}
+                            <div className="h-3 bg-white" style={{ backgroundImage: 'radial-gradient(circle, transparent 40%, white 40%)', backgroundSize: '12px 12px', backgroundPosition: '0 6px' }}></div>
                         </div>
 
-                        {/* Receipt Total */}
-                        <div className="px-6 py-4">
-                            <div className="flex justify-between items-center">
-                                <span className={`text-base font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>TOTAL</span>
-                                <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${detailDialog.total.toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        {/* Receipt Footer */}
-                        <div className={`px-6 py-4 border-t border-dashed ${isDark ? 'border-zinc-700' : 'border-zinc-300'}`}>
-                            <Button size="lg" variant="flat" className="w-full cursor-pointer" onPress={() => setDetailDialog(null)}>
-                                Cerrar
-                            </Button>
-                        </div>
+                        {/* Close button floating */}
+                        <button
+                            onClick={() => setDetailDialog(null)}
+                            className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center cursor-pointer text-white hover:bg-zinc-700 transition-colors shadow-lg"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             )}
