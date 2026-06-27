@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import {
     Button, Chip, Spinner, Select, Label, ListBox,
-    Table, TableHeader, TableBody, TableRow, TableCell, TableColumn,
 } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orderService } from '../services/order.service';
 import { tableService } from '../services/table.service';
 import { productService } from '../services/product.service';
-import { Order, OrderStatus, OrderItemCreate, TableStatus, Product } from '../types';
+import { Order, OrderStatus, OrderItemCreate, TableStatus } from '../types';
 import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
@@ -32,12 +31,11 @@ const OrdersPage = () => {
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
     const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
-    const [createDialog, setCreateDialog] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const [detailDialog, setDetailDialog] = useState<Order | null>(null);
     const [selectedTable, setSelectedTable] = useState<number>(0);
     const [orderItems, setOrderItems] = useState<OrderItemCreate[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<number>(0);
-    const [quantity, setQuantity] = useState(1);
     const [notes, setNotes] = useState('');
 
     const { data, isLoading } = useQuery({
@@ -61,54 +59,46 @@ const OrdersPage = () => {
             queryClient.invalidateQueries({ queryKey: ['orders'] });
             queryClient.invalidateQueries({ queryKey: ['tables'] });
             toast.success('Pedido creado');
-            handleCloseCreate();
+            handleCloseDrawer();
         },
         onError: (err: any) => toast.error(err.response?.data?.detail || 'Error al crear pedido'),
     });
 
-    const updateStatusMutation = useMutation({
-        mutationFn: ({ id, status }: { id: number; status: OrderStatus }) => orderService.update(id, { status }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['orders'] });
-            toast.success('Estado actualizado');
-        },
-        onError: (err: any) => toast.error(err.response?.data?.detail || 'Error'),
-    });
-
-    const handleCloseCreate = () => {
-        setCreateDialog(false);
+    const handleCloseDrawer = () => {
+        setDrawerOpen(false);
         setSelectedTable(0);
         setOrderItems([]);
         setSelectedProduct(0);
-        setQuantity(1);
         setNotes('');
     };
 
     const handleAddItem = () => {
-        if (!selectedProduct || quantity < 1) return;
+        if (!selectedProduct) return;
         const existing = orderItems.find((i) => i.product_id === selectedProduct);
         if (existing) {
-            setOrderItems(orderItems.map((i) => i.product_id === selectedProduct ? { ...i, quantity: i.quantity + quantity } : i));
+            setOrderItems(orderItems.map((i) => i.product_id === selectedProduct ? { ...i, quantity: i.quantity + 1 } : i));
         } else {
-            setOrderItems([...orderItems, { product_id: selectedProduct, quantity }]);
+            setOrderItems([...orderItems, { product_id: selectedProduct, quantity: 1 }]);
         }
         setSelectedProduct(0);
-        setQuantity(1);
+    };
+
+    const handleIncrement = (productId: number) => {
+        setOrderItems(orderItems.map((i) => i.product_id === productId ? { ...i, quantity: i.quantity + 1 } : i));
+    };
+
+    const handleDecrement = (productId: number) => {
+        setOrderItems(orderItems.map((i) => i.product_id === productId ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i));
     };
 
     const handleRemoveItem = (productId: number) => {
         setOrderItems(orderItems.filter((i) => i.product_id !== productId));
     };
 
-    const getProductName = (productId: number) => {
-        return products?.items.find((p) => p.id === productId)?.name || `Producto #${productId}`;
-    };
-
-    const getProductPrice = (productId: number) => {
-        return products?.items.find((p) => p.id === productId)?.sale_price || 0;
-    };
+    const getProduct = (productId: number) => products?.items.find((p) => p.id === productId);
 
     const occupiedTables = tables?.items.filter((t) => t.status === TableStatus.OCUPADA) || [];
+    const orderTotal = orderItems.reduce((acc, item) => acc + (getProduct(item.product_id)?.sale_price || 0) * item.quantity, 0);
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-64"><Spinner size="lg" /></div>;
@@ -140,7 +130,7 @@ const OrdersPage = () => {
                             </ListBox>
                         </Select.Popover>
                     </Select>
-                    <Button color="primary" onPress={() => setCreateDialog(true)}>
+                    <Button color="primary" className="cursor-pointer" onPress={() => setDrawerOpen(true)}>
                         + Nuevo Pedido
                     </Button>
                 </div>
@@ -172,7 +162,7 @@ const OrdersPage = () => {
                                 <td className={`px-4 py-3 text-sm text-right font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>${order.total.toLocaleString()}</td>
                                 <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(order.order_date).toLocaleString('es-CO')}</td>
                                 <td className="px-4 py-3 text-right">
-                                    <Button size="sm" variant="flat" onPress={() => setDetailDialog(order)}>Ver</Button>
+                                    <Button size="sm" variant="flat" className="cursor-pointer" onPress={() => setDetailDialog(order)}>Ver</Button>
                                 </td>
                             </tr>
                         ))}
@@ -185,21 +175,29 @@ const OrdersPage = () => {
                 </table>
             </div>
 
-            {/* Create Order Modal */}
-            {createDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={handleCloseCreate}>
-                    <div className={`rounded-3xl border w-full max-w-lg mx-4 p-8 shadow-2xl max-h-[90vh] overflow-y-auto ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
-                        {/* Icon */}
-                        <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-5">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-blue-400">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                            </svg>
+            {/* Drawer - Nuevo Pedido */}
+            {drawerOpen && (
+                <>
+                    {/* Overlay */}
+                    <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={handleCloseDrawer}></div>
+
+                    {/* Drawer Panel */}
+                    <div className={`fixed top-0 right-0 z-50 h-full w-full max-w-md flex flex-col shadow-2xl border-l transition-transform duration-300 ${isDark ? 'bg-[#111113] border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                        {/* Drawer Header */}
+                        <div className={`flex items-center justify-between px-6 py-5 border-b ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                            <div>
+                                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Nuevo Pedido</h2>
+                                <p className={`text-xs mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Agrega productos al pedido</p>
+                            </div>
+                            <button onClick={handleCloseDrawer} className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-500'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
 
-                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Nuevo Pedido</h2>
-                        <p className={`text-sm text-center mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Selecciona la mesa y agrega productos</p>
-
-                        <div className="space-y-5">
+                        {/* Drawer Body - Scrollable */}
+                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                             {/* Table Select */}
                             <Select
                                 className="w-full"
@@ -226,102 +224,149 @@ const OrdersPage = () => {
 
                             {/* Notes */}
                             <div>
-                                <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Notas</label>
+                                <label className={`text-xs font-medium mb-1.5 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Notas (opcional)</label>
                                 <input
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="Notas opcionales..."
-                                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    placeholder="Instrucciones especiales..."
+                                    className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
                                 />
                             </div>
 
                             {/* Divider */}
                             <div className={`h-px ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}></div>
 
-                            {/* Add Product */}
-                            <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Agregar productos</p>
-
-                            <div className="flex gap-2">
-                                <Select
-                                    className="flex-1"
-                                    placeholder="Buscar producto..."
-                                    selectedKey={selectedProduct ? String(selectedProduct) : undefined}
-                                    onSelectionChange={(key) => setSelectedProduct(Number(key))}
-                                >
-                                    <Label>Producto</Label>
-                                    <Select.Trigger>
-                                        <Select.Value />
-                                        <Select.Indicator />
-                                    </Select.Trigger>
-                                    <Select.Popover>
-                                        <ListBox>
-                                            {(products?.items || []).map((p) => (
-                                                <ListBox.Item key={p.id} id={String(p.id)} textValue={p.name}>
-                                                    {p.name} - ${p.sale_price.toLocaleString()}
-                                                    <ListBox.ItemIndicator />
-                                                </ListBox.Item>
-                                            ))}
-                                        </ListBox>
-                                    </Select.Popover>
-                                </Select>
-
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={quantity}
-                                    onChange={(e) => setQuantity(Number(e.target.value.replace(/[^0-9]/g, '')) || 1)}
-                                    className={`w-16 px-3 py-2 rounded-xl border text-sm text-center outline-none focus:border-blue-500 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-900'}`}
-                                />
-
-                                <Button color="primary" size="sm" onPress={handleAddItem} isDisabled={!selectedProduct}>
-                                    +
-                                </Button>
+                            {/* Add Product Section */}
+                            <div>
+                                <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Agregar Producto</p>
+                                <div className="flex gap-2">
+                                    <Select
+                                        className="flex-1"
+                                        placeholder="Buscar producto..."
+                                        selectedKey={selectedProduct ? String(selectedProduct) : undefined}
+                                        onSelectionChange={(key) => setSelectedProduct(Number(key))}
+                                    >
+                                        <Label>Producto</Label>
+                                        <Select.Trigger>
+                                            <Select.Value />
+                                            <Select.Indicator />
+                                        </Select.Trigger>
+                                        <Select.Popover>
+                                            <ListBox>
+                                                {(products?.items || []).map((p) => (
+                                                    <ListBox.Item key={p.id} id={String(p.id)} textValue={p.name}>
+                                                        <div className="flex justify-between w-full">
+                                                            <span>{p.name}</span>
+                                                            <span className="text-xs opacity-60">${p.sale_price.toLocaleString()}</span>
+                                                        </div>
+                                                        <ListBox.ItemIndicator />
+                                                    </ListBox.Item>
+                                                ))}
+                                            </ListBox>
+                                        </Select.Popover>
+                                    </Select>
+                                    <Button
+                                        color="primary"
+                                        isDisabled={!selectedProduct}
+                                        onPress={handleAddItem}
+                                        className="cursor-pointer px-5"
+                                    >
+                                        Agregar
+                                    </Button>
+                                </div>
                             </div>
 
                             {/* Items List */}
                             {orderItems.length > 0 && (
-                                <div className={`rounded-xl border p-3 space-y-2 ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-zinc-200 bg-zinc-50'}`}>
-                                    {orderItems.map((item) => (
-                                        <div key={item.product_id} className="flex items-center justify-between">
-                                            <div>
-                                                <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{getProductName(item.product_id)}</p>
-                                                <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                                    {item.quantity} x ${getProductPrice(item.product_id).toLocaleString()} = ${(item.quantity * getProductPrice(item.product_id)).toLocaleString()}
-                                                </p>
-                                            </div>
-                                            <button onClick={() => handleRemoveItem(item.product_id)} className="text-red-400 hover:text-red-300 transition-colors">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    ))}
-                                    <div className={`pt-2 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
-                                        <p className={`text-sm font-semibold text-right ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                                            Total: ${orderItems.reduce((acc, item) => acc + getProductPrice(item.product_id) * item.quantity, 0).toLocaleString()}
-                                        </p>
+                                <div>
+                                    <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                        Productos ({orderItems.length})
+                                    </p>
+                                    <div className="space-y-2">
+                                        {orderItems.map((item) => {
+                                            const product = getProduct(item.product_id);
+                                            const subtotal = (product?.sale_price || 0) * item.quantity;
+                                            return (
+                                                <div key={item.product_id} className={`flex items-center gap-3 p-3 rounded-xl border ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-zinc-200 bg-zinc-50'}`}>
+                                                    {/* Product Info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-zinc-900'}`}>{product?.name}</p>
+                                                        <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>${product?.sale_price.toLocaleString()} c/u</p>
+                                                    </div>
+
+                                                    {/* Quantity Controls */}
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => handleDecrement(item.product_id)}
+                                                            className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors text-lg font-medium ${isDark ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-zinc-200 text-zinc-900 hover:bg-zinc-300'}`}
+                                                        >
+                                                            −
+                                                        </button>
+                                                        <span className={`w-8 text-center text-sm font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>{item.quantity}</span>
+                                                        <button
+                                                            onClick={() => handleIncrement(item.product_id)}
+                                                            className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors text-lg font-medium ${isDark ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-zinc-200 text-zinc-900 hover:bg-zinc-300'}`}
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Subtotal */}
+                                                    <p className={`text-sm font-semibold w-20 text-right ${isDark ? 'text-white' : 'text-zinc-900'}`}>${subtotal.toLocaleString()}</p>
+
+                                                    {/* Remove */}
+                                                    <button
+                                                        onClick={() => handleRemoveItem(item.product_id)}
+                                                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer text-red-400 hover:bg-red-500/10 transition-colors"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
+                                </div>
+                            )}
+
+                            {orderItems.length === 0 && (
+                                <div className={`text-center py-10 rounded-xl border-2 border-dashed ${isDark ? 'border-zinc-800 text-zinc-600' : 'border-zinc-200 text-zinc-400'}`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-10 h-10 mx-auto mb-2 opacity-50">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                    </svg>
+                                    <p className="text-sm">Aún no hay productos</p>
+                                    <p className="text-xs mt-1 opacity-70">Selecciona un producto arriba para agregarlo</p>
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex gap-3 mt-8">
-                            <Button size="lg" variant="flat" className="flex-1 text-base" onPress={handleCloseCreate}>
-                                Cancelar
-                            </Button>
-                            <Button
-                                size="lg"
-                                color="primary"
-                                className="flex-1 text-base font-semibold"
-                                isLoading={createMutation.isPending}
-                                isDisabled={!selectedTable || orderItems.length === 0}
-                                onPress={() => createMutation.mutate()}
-                            >
-                                Crear Pedido
-                            </Button>
+                        {/* Drawer Footer */}
+                        <div className={`px-6 py-4 border-t ${isDark ? 'border-zinc-800 bg-[#0a0a0a]' : 'border-zinc-200 bg-zinc-50'}`}>
+                            {orderItems.length > 0 && (
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className={`text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{orderItems.length} productos</span>
+                                    <span className={`text-xl font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${orderTotal.toLocaleString()}</span>
+                                </div>
+                            )}
+                            <div className="flex gap-3">
+                                <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={handleCloseDrawer}>
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    size="lg"
+                                    color="primary"
+                                    className="flex-1 cursor-pointer font-semibold"
+                                    isLoading={createMutation.isPending}
+                                    isDisabled={!selectedTable || orderItems.length === 0}
+                                    onPress={() => createMutation.mutate()}
+                                >
+                                    Crear Pedido
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </>
             )}
 
             {/* Detail Modal */}
@@ -348,7 +393,7 @@ const OrdersPage = () => {
                             <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Total</span>
                             <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${detailDialog.total.toLocaleString()}</span>
                         </div>
-                        <Button size="lg" variant="flat" className="w-full mt-6" onPress={() => setDetailDialog(null)}>
+                        <Button size="lg" variant="flat" className="w-full mt-6 cursor-pointer" onPress={() => setDetailDialog(null)}>
                             Cerrar
                         </Button>
                     </div>
