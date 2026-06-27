@@ -399,33 +399,70 @@ const OrdersPage = () => {
                 </>
             )}
 
-            {/* Detail Modal */}
+            {/* Detail Modal - Invoice Style */}
             {detailDialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setDetailDialog(null)}>
-                    <div className={`rounded-3xl border w-full max-w-md mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
-                        <h2 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Pedido #{detailDialog.id}</h2>
-                        <div className={`text-sm space-y-1 mb-4 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                            <p>Mesa: {detailDialog.table_number}</p>
-                            <p>Empleado: {detailDialog.employee_name}</p>
-                            <p>Estado: <Chip color={statusColor[detailDialog.status]} size="sm" variant="flat">{statusLabel[detailDialog.status]}</Chip></p>
+                    <div className={`rounded-3xl border w-full max-w-sm mx-4 shadow-2xl overflow-hidden ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
+                        {/* Receipt Header */}
+                        <div className={`px-6 pt-6 pb-4 text-center border-b border-dashed ${isDark ? 'border-zinc-700' : 'border-zinc-300'}`}>
+                            <p className="text-2xl mb-1">🐟</p>
+                            <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Poisson POS</h2>
+                            <p className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Pedido #{detailDialog.id}</p>
                         </div>
-                        <div className={`h-px mb-4 ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}></div>
-                        <div className="space-y-2 mb-4">
-                            {detailDialog.items.map((item) => (
-                                <div key={item.id} className="flex justify-between text-sm">
-                                    <span className={isDark ? 'text-zinc-300' : 'text-zinc-700'}>{item.product_name} x{item.quantity}</span>
-                                    <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>${item.subtotal.toLocaleString()}</span>
-                                </div>
-                            ))}
+
+                        {/* Receipt Info */}
+                        <div className={`px-6 py-3 text-xs space-y-1 border-b border-dashed ${isDark ? 'border-zinc-700 text-zinc-400' : 'border-zinc-300 text-zinc-500'}`}>
+                            <div className="flex justify-between">
+                                <span>Mesa:</span>
+                                <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{detailDialog.table_number || detailDialog.table_id}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Empleado:</span>
+                                <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{detailDialog.employee_name || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Fecha:</span>
+                                <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{new Date(detailDialog.order_date).toLocaleString('es-CO')}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Estado:</span>
+                                <Chip color={statusColor[detailDialog.status]} size="sm" variant="flat">{statusLabel[detailDialog.status]}</Chip>
+                            </div>
                         </div>
-                        <div className={`h-px mb-4 ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}></div>
-                        <div className="flex justify-between">
-                            <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Total</span>
-                            <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${detailDialog.total.toLocaleString()}</span>
+
+                        {/* Receipt Items */}
+                        <div className={`px-6 py-3 border-b border-dashed ${isDark ? 'border-zinc-700' : 'border-zinc-300'}`}>
+                            <div className={`flex justify-between text-xs font-semibold uppercase tracking-wider mb-2 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                                <span>Producto</span>
+                                <span>Subtotal</span>
+                            </div>
+                            <div className="space-y-2">
+                                {detailDialog.items.map((item) => (
+                                    <div key={item.id} className="flex justify-between text-sm">
+                                        <div>
+                                            <span className={isDark ? 'text-white' : 'text-zinc-900'}>{item.product_name || `#${item.product_id}`}</span>
+                                            <span className={`text-xs ml-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>x{item.quantity}</span>
+                                        </div>
+                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>${item.subtotal.toLocaleString()}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <Button size="lg" variant="flat" className="w-full mt-6 cursor-pointer" onPress={() => setDetailDialog(null)}>
-                            Cerrar
-                        </Button>
+
+                        {/* Receipt Total */}
+                        <div className="px-6 py-4">
+                            <div className="flex justify-between items-center">
+                                <span className={`text-base font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>TOTAL</span>
+                                <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${detailDialog.total.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        {/* Receipt Footer */}
+                        <div className={`px-6 py-4 border-t border-dashed ${isDark ? 'border-zinc-700' : 'border-zinc-300'}`}>
+                            <Button size="lg" variant="flat" className="w-full cursor-pointer" onPress={() => setDetailDialog(null)}>
+                                Cerrar
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

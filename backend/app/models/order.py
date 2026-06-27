@@ -30,10 +30,22 @@ class Order(Base, TimestampMixin, SoftDeleteMixin):
     )
 
     # Relationships
-    table = relationship("Table", back_populates="orders")
-    employee = relationship("Employee", back_populates="orders")
+    table = relationship("Table", back_populates="orders", lazy="joined")
+    employee = relationship("Employee", back_populates="orders", lazy="joined")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     sale = relationship("Sale", back_populates="order", uselist=False)
+
+    @property
+    def employee_name(self):
+        if self.employee:
+            return f"{self.employee.first_name} {self.employee.last_name}"
+        return None
+
+    @property
+    def table_number(self):
+        if self.table:
+            return self.table.number
+        return None
 
 
 class OrderItem(Base, TimestampMixin):
@@ -49,4 +61,10 @@ class OrderItem(Base, TimestampMixin):
 
     # Relationships
     order = relationship("Order", back_populates="items")
-    product = relationship("Product", back_populates="order_items")
+    product = relationship("Product", back_populates="order_items", lazy="joined")
+
+    @property
+    def product_name(self):
+        if self.product:
+            return self.product.name
+        return None
