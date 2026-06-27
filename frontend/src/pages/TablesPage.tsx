@@ -1,45 +1,16 @@
 import { useState } from 'react';
-import {
-    Box,
-    Typography,
-    Grid,
-    Card,
-    CardContent,
-    CardActions,
-    Button,
-    Chip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    CircularProgress,
-    IconButton,
-    Fab,
-} from '@mui/material';
-import { Add, Delete } from '@mui/icons-material';
+import { Button, Card, CardContent, CardHeader, CardTitle, Chip, Spinner } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tableService } from '../services/table.service';
 import { employeeService } from '../services/employee.service';
 import { Table, TableStatus } from '../types';
 import { useAuthStore } from '../store/auth.store';
-import ConfirmDialog from '../components/ConfirmDialog';
 import toast from 'react-hot-toast';
 
-const statusColor: Record<TableStatus, string> = {
-    [TableStatus.LIBRE]: '#4CAF50',
-    [TableStatus.OCUPADA]: '#F44336',
-    [TableStatus.EN_PAGO]: '#FFC107',
-};
-
-const statusLabel: Record<TableStatus, string> = {
-    [TableStatus.LIBRE]: 'Libre',
-    [TableStatus.OCUPADA]: 'Ocupada',
-    [TableStatus.EN_PAGO]: 'En Pago',
+const statusConfig: Record<TableStatus, { label: string; color: string; bg: string; border: string }> = {
+    [TableStatus.LIBRE]: { label: 'Libre', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+    [TableStatus.OCUPADA]: { label: 'Ocupada', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+    [TableStatus.EN_PAGO]: { label: 'En Pago', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
 };
 
 const TablesPage = () => {
@@ -63,8 +34,7 @@ const TablesPage = () => {
     });
 
     const openMutation = useMutation({
-        mutationFn: ({ id, waiter_id }: { id: number; waiter_id: number }) =>
-            tableService.open(id, { waiter_id }),
+        mutationFn: ({ id, waiter_id }: { id: number; waiter_id: number }) => tableService.open(id, { waiter_id }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tables'] });
             toast.success('Mesa abierta');
@@ -113,138 +83,197 @@ const TablesPage = () => {
         }
     };
 
+    const libre = data?.items.filter((t) => t.status === TableStatus.LIBRE) || [];
+    const ocupada = data?.items.filter((t) => t.status === TableStatus.OCUPADA) || [];
+    const enPago = data?.items.filter((t) => t.status === TableStatus.EN_PAGO) || [];
+
     if (isLoading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-                <CircularProgress />
-            </Box>
+            <div className="flex justify-center items-center h-64">
+                <Spinner size="lg" />
+            </div>
         );
     }
 
     return (
-        <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4">Mesas</Typography>
-                {employee?.role === 'admin' && (
-                    <Fab color="primary" size="small" onClick={() => setCreateDialog(true)}>
-                        <Add />
-                    </Fab>
-                )}
-            </Box>
-
-            <Grid container spacing={2}>
-                {data?.items.map((table) => (
-                    <Grid item xs={6} sm={4} md={3} lg={2} key={table.id}>
-                        <Card
-                            sx={{
-                                cursor: 'pointer',
-                                border: `3px solid ${statusColor[table.status]}`,
-                                transition: 'transform 0.2s',
-                                '&:hover': { transform: 'scale(1.05)' },
-                                position: 'relative',
-                            }}
-                            onClick={() => handleTableClick(table)}
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-semibold text-white">Mesas</h1>
+                    <p className="text-sm text-zinc-500 mt-0.5">{data?.items.length} mesas en total</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    {/* Status summary */}
+                    <div className="flex items-center gap-2 mr-4">
+                        <span className="flex items-center gap-1.5 text-xs text-zinc-400">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            {libre.length} libres
+                        </span>
+                        <span className="flex items-center gap-1.5 text-xs text-zinc-400">
+                            <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                            {ocupada.length} ocupadas
+                        </span>
+                        <span className="flex items-center gap-1.5 text-xs text-zinc-400">
+                            <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                            {enPago.length} en pago
+                        </span>
+                    </div>
+                    {employee?.role === 'admin' && (
+                        <Button
+                            color="primary"
+                            size="sm"
+                            onPress={() => setCreateDialog(true)}
+                            className="font-medium"
                         >
+                            + Nueva Mesa
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            {/* Tables Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {data?.items.map((table) => {
+                    const config = statusConfig[table.status];
+                    return (
+                        <div
+                            key={table.id}
+                            onClick={() => handleTableClick(table)}
+                            className={`relative group cursor-pointer rounded-2xl border ${config.border} ${config.bg} p-4 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg`}
+                        >
+                            {/* Delete button (admin only) */}
                             {employee?.role === 'admin' && (
-                                <IconButton
-                                    size="small"
-                                    sx={{ position: 'absolute', top: 4, right: 4 }}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDeleteConfirm(table);
-                                    }}
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setDeleteConfirm(table); }}
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
                                 >
-                                    <Delete fontSize="small" />
-                                </IconButton>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                             )}
-                            <CardContent sx={{ textAlign: 'center', pb: 1 }}>
-                                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                                    {table.number}
-                                </Typography>
-                                <Chip
-                                    label={statusLabel[table.status]}
-                                    size="small"
-                                    sx={{ backgroundColor: statusColor[table.status], color: '#fff', mt: 1 }}
-                                />
-                            </CardContent>
-                            <CardActions sx={{ justifyContent: 'center', pt: 0 }}>
-                                {table.waiter_name && (
-                                    <Typography variant="caption" color="text.secondary">
-                                        {table.waiter_name}
-                                    </Typography>
-                                )}
-                                {table.occupation_time && (
-                                    <Typography variant="caption" color="text.secondary">
-                                        {table.occupation_time}
-                                    </Typography>
-                                )}
-                            </CardActions>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
 
-            {/* Open Table Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="xs" fullWidth>
-                <DialogTitle>Abrir Mesa {selectedTable?.number}</DialogTitle>
-                <DialogContent>
-                    <FormControl fullWidth sx={{ mt: 2 }}>
-                        <InputLabel>Mesero</InputLabel>
-                        <Select value={waiterId} onChange={(e) => setWaiterId(Number(e.target.value))} label="Mesero">
+                            {/* Table Number */}
+                            <div className="text-center">
+                                <p className="text-3xl font-bold text-white mb-2">{table.number}</p>
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium ${config.color} ${config.bg} border ${config.border}`}>
+                                    {config.label}
+                                </span>
+                            </div>
+
+                            {/* Waiter & Time */}
+                            {(table.waiter_name || table.occupation_time) && (
+                                <div className="mt-3 pt-2 border-t border-zinc-800/50 text-center space-y-0.5">
+                                    {table.waiter_name && (
+                                        <p className="text-[11px] text-zinc-400 truncate">{table.waiter_name}</p>
+                                    )}
+                                    {table.occupation_time && (
+                                        <p className="text-[10px] text-zinc-500">⏱ {table.occupation_time}</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Open Table Modal */}
+            {openDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setOpenDialog(false)}>
+                    <div className="bg-[#18181b] rounded-2xl border border-zinc-800 w-full max-w-sm mx-4 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="text-lg font-semibold text-white mb-1">Abrir Mesa {selectedTable?.number}</h2>
+                        <p className="text-sm text-zinc-500 mb-5">Selecciona el mesero asignado</p>
+
+                        <select
+                            value={waiterId}
+                            onChange={(e) => setWaiterId(Number(e.target.value))}
+                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm outline-none focus:border-blue-500 transition-colors"
+                        >
+                            <option value={0}>Seleccionar mesero...</option>
                             {waiters?.items.map((w) => (
-                                <MenuItem key={w.id} value={w.id}>
-                                    {w.first_name} {w.last_name}
-                                </MenuItem>
+                                <option key={w.id} value={w.id}>{w.first_name} {w.last_name}</option>
                             ))}
-                        </Select>
-                    </FormControl>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
-                    <Button
-                        variant="contained"
-                        onClick={() => selectedTable && openMutation.mutate({ id: selectedTable.id, waiter_id: waiterId })}
-                        disabled={!waiterId || openMutation.isPending}
-                    >
-                        Abrir Mesa
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                        </select>
 
-            {/* Create Table Dialog */}
-            <Dialog open={createDialog} onClose={() => setCreateDialog(false)} maxWidth="xs" fullWidth>
-                <DialogTitle>Crear Mesa</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        fullWidth
-                        label="Número de mesa"
-                        type="number"
-                        value={newTableNumber}
-                        onChange={(e) => setNewTableNumber(e.target.value)}
-                        sx={{ mt: 2 }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setCreateDialog(false)}>Cancelar</Button>
-                    <Button
-                        variant="contained"
-                        onClick={() => createMutation.mutate(Number(newTableNumber))}
-                        disabled={!newTableNumber || createMutation.isPending}
-                    >
-                        Crear
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                        <div className="flex gap-2 mt-5">
+                            <Button size="sm" variant="flat" className="flex-1" onPress={() => setOpenDialog(false)}>
+                                Cancelar
+                            </Button>
+                            <Button
+                                size="sm"
+                                color="primary"
+                                className="flex-1"
+                                isLoading={openMutation.isPending}
+                                isDisabled={!waiterId}
+                                onPress={() => selectedTable && openMutation.mutate({ id: selectedTable.id, waiter_id: waiterId })}
+                            >
+                                Abrir Mesa
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            <ConfirmDialog
-                open={!!deleteConfirm}
-                title="Eliminar Mesa"
-                message={`¿Está seguro de eliminar la mesa ${deleteConfirm?.number}?`}
-                onConfirm={() => deleteConfirm && deleteMutation.mutate(deleteConfirm.id)}
-                onCancel={() => setDeleteConfirm(null)}
-                loading={deleteMutation.isPending}
-            />
-        </Box>
+            {/* Create Table Modal */}
+            {createDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setCreateDialog(false)}>
+                    <div className="bg-[#18181b] rounded-2xl border border-zinc-800 w-full max-w-sm mx-4 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="text-lg font-semibold text-white mb-1">Crear Mesa</h2>
+                        <p className="text-sm text-zinc-500 mb-5">Ingresa el número de la nueva mesa</p>
+
+                        <input
+                            type="number"
+                            value={newTableNumber}
+                            onChange={(e) => setNewTableNumber(e.target.value)}
+                            placeholder="Número de mesa"
+                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm placeholder-zinc-500 outline-none focus:border-blue-500 transition-colors"
+                        />
+
+                        <div className="flex gap-2 mt-5">
+                            <Button size="sm" variant="flat" className="flex-1" onPress={() => setCreateDialog(false)}>
+                                Cancelar
+                            </Button>
+                            <Button
+                                size="sm"
+                                color="primary"
+                                className="flex-1"
+                                isLoading={createMutation.isPending}
+                                isDisabled={!newTableNumber}
+                                onPress={() => createMutation.mutate(Number(newTableNumber))}
+                            >
+                                Crear
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirm Modal */}
+            {deleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)}>
+                    <div className="bg-[#18181b] rounded-2xl border border-zinc-800 w-full max-w-sm mx-4 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="text-lg font-semibold text-white mb-1">Eliminar Mesa</h2>
+                        <p className="text-sm text-zinc-400 mb-5">¿Estás seguro de eliminar la mesa <span className="text-white font-medium">{deleteConfirm.number}</span>? Esta acción no se puede deshacer.</p>
+
+                        <div className="flex gap-2">
+                            <Button size="sm" variant="flat" className="flex-1" onPress={() => setDeleteConfirm(null)}>
+                                Cancelar
+                            </Button>
+                            <Button
+                                size="sm"
+                                color="danger"
+                                className="flex-1"
+                                isLoading={deleteMutation.isPending}
+                                onPress={() => deleteConfirm && deleteMutation.mutate(deleteConfirm.id)}
+                            >
+                                Eliminar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
