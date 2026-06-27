@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Chip, Spinner } from '@heroui/react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tableService } from '../services/table.service';
 import { employeeService } from '../services/employee.service';
@@ -192,17 +192,28 @@ const TablesPage = () => {
                         <h2 className="text-xl font-bold text-white text-center mb-1">Abrir Mesa {selectedTable?.number}</h2>
                         <p className="text-sm text-zinc-400 text-center mb-8">Selecciona el mesero que atenderá esta mesa</p>
 
-                        <label className="text-sm text-zinc-400 font-medium mb-2 block">Mesero asignado</label>
-                        <select
-                            value={waiterId}
-                            onChange={(e) => setWaiterId(Number(e.target.value))}
-                            className="w-full px-4 py-3.5 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        <Select
+                            className="w-full"
+                            placeholder="Seleccionar mesero..."
+                            selectedKey={waiterId ? String(waiterId) : undefined}
+                            onSelectionChange={(key) => setWaiterId(Number(key))}
                         >
-                            <option value={0}>Seleccionar mesero...</option>
-                            {waiters?.items.map((w) => (
-                                <option key={w.id} value={w.id}>{w.first_name} {w.last_name}</option>
-                            ))}
-                        </select>
+                            <Label>Mesero asignado</Label>
+                            <Select.Trigger>
+                                <Select.Value />
+                                <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                                <ListBox>
+                                    {(waiters?.items || []).map((w) => (
+                                        <ListBox.Item key={w.id} id={String(w.id)} textValue={`${w.first_name} ${w.last_name}`}>
+                                            {w.first_name} {w.last_name}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </Select.Popover>
+                        </Select>
 
                         <div className="flex gap-3 mt-8">
                             <Button size="lg" variant="flat" className="flex-1 text-base" onPress={() => setOpenDialog(false)}>
