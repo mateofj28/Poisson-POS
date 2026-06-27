@@ -250,11 +250,16 @@ const TablesPage = () => {
 
                         <label className="text-sm text-zinc-400 font-medium mb-2 block">Número de mesa</label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             value={newTableNumber}
-                            onChange={(e) => setNewTableNumber(e.target.value)}
+                            onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                setNewTableNumber(val);
+                            }}
                             placeholder="Ej: 13"
-                            className="w-full px-4 py-3.5 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            className="w-full px-4 py-3.5 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white text-sm placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
 
                         <div className="flex gap-3 mt-8">
