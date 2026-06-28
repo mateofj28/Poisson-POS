@@ -391,6 +391,19 @@ const SalesPage = () => {
                                     <span className="text-xs font-mono font-bold text-zinc-900 uppercase tracking-wider">Total</span>
                                     <span className="text-2xl font-bold text-zinc-900 font-mono">${detailDialog.total.toLocaleString()}</span>
                                 </div>
+                                {(() => {
+                                    const totalPaid = detailDialog.payments.reduce((s, p) => s + p.amount, 0);
+                                    const change = totalPaid - detailDialog.total;
+                                    if (change > 0) {
+                                        return (
+                                            <div className="flex justify-between items-center mt-2 pt-2 border-t border-zinc-200">
+                                                <span className="text-[10px] font-mono text-amber-600 uppercase tracking-wider">Cambio devuelto</span>
+                                                <span className="text-sm font-bold text-amber-600 font-mono">${change.toLocaleString()}</span>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                })()}
                             </div>
                             <div className="px-6 py-3 text-center border-t border-dashed border-zinc-300">
                                 <p className="text-[9px] font-mono text-zinc-400">¡Gracias por su compra!</p>

@@ -30,10 +30,22 @@ class Sale(Base, TimestampMixin):
     notes = Column(String(500), nullable=True)
 
     # Relationships
-    order = relationship("Order", back_populates="sale")
-    employee = relationship("Employee", back_populates="sales")
+    order = relationship("Order", back_populates="sale", lazy="joined")
+    employee = relationship("Employee", back_populates="sales", lazy="joined")
     cash_register = relationship("CashRegister", back_populates="sales")
-    payments = relationship("SalePayment", back_populates="sale", cascade="all, delete-orphan")
+    payments = relationship("SalePayment", back_populates="sale", cascade="all, delete-orphan", lazy="joined")
+
+    @property
+    def employee_name(self):
+        if self.employee:
+            return f"{self.employee.first_name} {self.employee.last_name}"
+        return None
+
+    @property
+    def table_number(self):
+        if self.order and self.order.table:
+            return self.order.table.number
+        return None
 
 
 class SalePayment(Base, TimestampMixin):
