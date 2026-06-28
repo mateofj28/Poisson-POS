@@ -182,31 +182,39 @@ const SalesPage = () => {
                         {/* Body */}
                         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                             {/* Order Select */}
-                            <Select
-                                className="w-full"
-                                placeholder="Seleccionar pedido..."
-                                selectedKey={selectedOrder ? String(selectedOrder) : undefined}
-                                onSelectionChange={(key) => {
-                                    const val = typeof key === 'string' ? key : String(key);
-                                    setSelectedOrder(Number(val) || 0);
-                                }}
-                            >
-                                <Label>Pedido</Label>
-                                <Select.Trigger>
-                                    <Select.Value />
-                                    <Select.Indicator />
-                                </Select.Trigger>
-                                <Select.Popover>
-                                    <ListBox>
-                                        {availableOrders.map((o) => (
-                                            <ListBox.Item key={o.id} id={String(o.id)} textValue={`Pedido #${o.id}`}>
-                                                Pedido #{o.id} — Mesa {o.table_number} — ${o.total.toLocaleString()}
-                                                <ListBox.ItemIndicator />
-                                            </ListBox.Item>
-                                        ))}
-                                    </ListBox>
-                                </Select.Popover>
-                            </Select>
+                            {availableOrders.length > 0 ? (
+                                <Select
+                                    className="w-full"
+                                    placeholder="Seleccionar pedido..."
+                                    selectedKey={selectedOrder ? String(selectedOrder) : undefined}
+                                    onSelectionChange={(key) => {
+                                        const val = typeof key === 'string' ? key : String(key);
+                                        setSelectedOrder(Number(val) || 0);
+                                    }}
+                                >
+                                    <Label>Pedido</Label>
+                                    <Select.Trigger>
+                                        <Select.Value />
+                                        <Select.Indicator />
+                                    </Select.Trigger>
+                                    <Select.Popover>
+                                        <ListBox>
+                                            {availableOrders.map((o) => (
+                                                <ListBox.Item key={o.id} id={String(o.id)} textValue={`Pedido #${o.id}`}>
+                                                    Pedido #{o.id} — Mesa {o.table_number} — ${o.total.toLocaleString()}
+                                                    <ListBox.ItemIndicator />
+                                                </ListBox.Item>
+                                            ))}
+                                        </ListBox>
+                                    </Select.Popover>
+                                </Select>
+                            ) : (
+                                <div className={`p-4 rounded-xl border-2 border-dashed text-center ${isDark ? 'border-zinc-700 bg-zinc-900/50' : 'border-zinc-300 bg-zinc-50'}`}>
+                                    <p className="text-2xl mb-2">📋</p>
+                                    <p className={`text-sm font-medium ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>No hay pedidos disponibles</p>
+                                    <p className={`text-xs mt-1 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Todos los pedidos ya fueron cobrados o no hay pedidos activos</p>
+                                </div>
+                            )}
 
                             {/* Order Summary */}
                             {selectedOrderData && (
