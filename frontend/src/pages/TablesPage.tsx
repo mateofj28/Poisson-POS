@@ -101,14 +101,13 @@ const TablesPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Mesas</h1>
                     <p className="text-sm text-zinc-500 mt-0.5">{data?.items.length} mesas en total</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    {/* Status summary */}
-                    <div className="flex items-center gap-2 mr-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1.5 text-xs text-zinc-400">
                             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                             {libre.length} libres
@@ -127,7 +126,7 @@ const TablesPage = () => {
                             color="primary"
                             size="sm"
                             onPress={() => setCreateDialog(true)}
-                            className="font-medium"
+                            className="font-medium cursor-pointer"
                         >
                             + Nueva Mesa
                         </Button>
@@ -136,14 +135,14 @@ const TablesPage = () => {
             </div>
 
             {/* Tables Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {data?.items.map((table) => {
                     const config = statusConfig[table.status];
                     return (
                         <div
                             key={table.id}
                             onClick={() => handleTableClick(table)}
-                            className={`relative group cursor-pointer rounded-2xl border ${config.border} ${config.bg} p-4 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg`}
+                            className={`relative group cursor-pointer rounded-2xl border ${config.border} ${config.bg} p-5 sm:p-4 transition-all duration-200 hover:scale-[1.03] hover:shadow-lg`}
                         >
                             {/* Delete button (admin only) */}
                             {employee?.role === 'admin' && (

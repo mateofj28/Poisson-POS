@@ -109,7 +109,7 @@ const SalesPage = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Ventas</h1>
                 <Button color="primary" className="cursor-pointer" onPress={() => {
                     if (availableOrders.length === 0) {
@@ -122,9 +122,9 @@ const SalesPage = () => {
                 </Button>
             </div>
 
-            {/* Table */}
-            <div className={`rounded-xl border overflow-hidden ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
-                <table className="w-full">
+            {/* Table with horizontal scroll */}
+            <div className={`rounded-xl border overflow-x-auto ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                <table className="w-full min-w-[800px]">
                     <thead className={isDark ? 'bg-zinc-900' : 'bg-zinc-50'}>
                         <tr>
                             <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>#</th>
