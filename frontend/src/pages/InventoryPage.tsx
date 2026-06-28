@@ -1,33 +1,5 @@
 import { useState } from 'react';
-import {
-    Box,
-    Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Button,
-    Chip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    TextField,
-    CircularProgress,
-    Tabs,
-    Tab,
-    Stack,
-    Autocomplete,
-    Alert,
-} from '@mui/material';
-import { Add, Inventory2, TrendingUp, TrendingDown, SwapVert, Warning, Delete as DeleteIcon } from '@mui/icons-material';
+import { Button, Chip, Spinner } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,6 +7,7 @@ import { z } from 'zod';
 import { inventoryService } from '../services/inventory.service';
 import { productService } from '../services/product.service';
 import { MovementType, Product } from '../types';
+import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
 const movementTypeLabel: Record<MovementType, string> = {
@@ -55,11 +28,11 @@ const movementTypeIcon: Record<MovementType, string> = {
     [MovementType.VENTA]: '🛒',
 };
 
-const movementTypeColor: Record<MovementType, 'success' | 'error' | 'warning' | 'info' | 'default'> = {
+const movementTypeColor: Record<MovementType, 'success' | 'danger' | 'warning' | 'primary' | 'default'> = {
     [MovementType.ENTRADA]: 'success',
-    [MovementType.SALIDA]: 'error',
-    [MovementType.AJUSTE]: 'info',
-    [MovementType.PERDIDA]: 'error',
+    [MovementType.SALIDA]: 'danger',
+    [MovementType.AJUSTE]: 'primary',
+    [MovementType.PERDIDA]: 'danger',
     [MovementType.DESPERDICIO]: 'warning',
     [MovementType.VENTA]: 'default',
 };
@@ -75,8 +48,11 @@ type MovementForm = z.infer<typeof movementSchema>;
 
 const InventoryPage = () => {
     const queryClient = useQueryClient();
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
     const [tab, setTab] = useState(0);
     const [createDialog, setCreateDialog] = useState(false);
+    const [productSearch, setProductSearch] = useState('');
 
     const { data: movements, isLoading } = useQuery({
         queryKey: ['inventory-movements'],
@@ -119,277 +95,249 @@ const InventoryPage = () => {
         createMutation.mutate(data);
     };
 
-    const getMovementIcon = (type: MovementType) => {
-        switch (type) {
-            case MovementType.ENTRADA: return <TrendingUp fontSize="small" color="success" />;
-            case MovementType.SALIDA: return <TrendingDown fontSize="small" color="error" />;
-            case MovementType.AJUSTE: return <SwapVert fontSize="small" color="info" />;
-            case MovementType.PERDIDA: return <Warning fontSize="small" color="error" />;
-            case MovementType.DESPERDICIO: return <DeleteIcon fontSize="small" color="warning" />;
-            default: return <Inventory2 fontSize="small" />;
-        }
-    };
+    const filteredProducts = products?.items.filter((p) =>
+        !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase())
+    ) || [];
 
     if (isLoading) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}><CircularProgress /></Box>;
+        return <div className="flex justify-center items-center h-64"><Spinner size="lg" /></div>;
     }
 
     return (
-        <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-                <Typography variant="h4">Inventario</Typography>
-                <Button variant="contained" startIcon={<Add />} onClick={() => setCreateDialog(true)}>
-                    Nuevo Movimiento
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Inventario</h1>
+                <Button color="primary" className="cursor-pointer font-medium" onPress={() => setCreateDialog(true)}>
+                    + Nuevo Movimiento
                 </Button>
-            </Box>
+            </div>
 
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-                <Tab label="Movimientos" />
-                <Tab label={`Bajo Stock (${lowStock?.length || 0})`} />
-            </Tabs>
+            {/* Tabs */}
+            <div className="flex gap-2">
+                <button
+                    onClick={() => setTab(0)}
+                    className={`cursor-pointer px-4 py-2 rounded-xl text-sm font-medium transition-all ${tab === 0
+                        ? 'bg-blue-500 text-white'
+                        : isDark ? 'bg-zinc-800 text-zinc-400 hover:text-white' : 'bg-zinc-100 text-zinc-500 hover:text-zinc-900'
+                        }`}
+                >
+                    Movimientos
+                </button>
+                <button
+                    onClick={() => setTab(1)}
+                    className={`cursor-pointer px-4 py-2 rounded-xl text-sm font-medium transition-all ${tab === 1
+                        ? 'bg-amber-500 text-white'
+                        : isDark ? 'bg-zinc-800 text-zinc-400 hover:text-white' : 'bg-zinc-100 text-zinc-500 hover:text-zinc-900'
+                        }`}
+                >
+                    Bajo Stock ({lowStock?.length || 0})
+                </button>
+            </div>
 
+            {/* Movements Tab */}
             {tab === 0 && (
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Producto</TableCell>
-                                <TableCell>Tipo</TableCell>
-                                <TableCell align="right">Cantidad</TableCell>
-                                <TableCell align="right">Stock Anterior</TableCell>
-                                <TableCell align="right">Stock Nuevo</TableCell>
-                                <TableCell>Razón</TableCell>
-                                <TableCell>Fecha</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
+                <div className={`rounded-xl border overflow-x-auto ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                    <table className="w-full min-w-[800px]">
+                        <thead className={isDark ? 'bg-zinc-900' : 'bg-zinc-50'}>
+                            <tr>
+                                <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Producto</th>
+                                <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Tipo</th>
+                                <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Cantidad</th>
+                                <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Stock Anterior</th>
+                                <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Stock Nuevo</th>
+                                <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Razón</th>
+                                <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody className={`divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
                             {movements?.items.map((mov) => (
-                                <TableRow key={mov.id}>
-                                    <TableCell>{mov.product_name || `#${mov.product_id}`}</TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            icon={getMovementIcon(mov.movement_type)}
-                                            label={movementTypeLabel[mov.movement_type]}
-                                            size="small"
-                                            color={movementTypeColor[mov.movement_type]}
-                                            variant="outlined"
-                                        />
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <Typography fontWeight={600}>
-                                            {mov.movement_type === MovementType.ENTRADA ? '+' : '-'}{mov.quantity}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell align="right">{mov.previous_stock}</TableCell>
-                                    <TableCell align="right">
-                                        <Typography fontWeight={600} color={mov.new_stock <= 0 ? 'error.main' : 'text.primary'}>
-                                            {mov.new_stock}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>{mov.reason || '-'}</TableCell>
-                                    <TableCell>{new Date(mov.created_at).toLocaleString('es-CO')}</TableCell>
-                                </TableRow>
+                                <tr key={mov.id} className={`transition-colors ${isDark ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
+                                    <td className={`px-4 py-3 text-sm ${isDark ? 'text-white' : 'text-zinc-900'}`}>{mov.product_name || `#${mov.product_id}`}</td>
+                                    <td className="px-4 py-3">
+                                        <Chip color={movementTypeColor[mov.movement_type]} size="sm" variant="flat">
+                                            {movementTypeIcon[mov.movement_type]} {movementTypeLabel[mov.movement_type]}
+                                        </Chip>
+                                    </td>
+                                    <td className={`px-4 py-3 text-sm text-right font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                                        {mov.movement_type === MovementType.ENTRADA ? '+' : '-'}{mov.quantity.toLocaleString()}
+                                    </td>
+                                    <td className={`px-4 py-3 text-sm text-right ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{mov.previous_stock.toLocaleString()}</td>
+                                    <td className={`px-4 py-3 text-sm text-right font-semibold ${mov.new_stock <= 0 ? 'text-red-400' : isDark ? 'text-white' : 'text-zinc-900'}`}>
+                                        {mov.new_stock.toLocaleString()}
+                                    </td>
+                                    <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{mov.reason || '-'}</td>
+                                    <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(mov.created_at).toLocaleString('es-CO')}</td>
+                                </tr>
                             ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                            {(!movements?.items || movements.items.length === 0) && (
+                                <tr><td colSpan={7} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>No hay movimientos registrados</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             )}
 
+            {/* Low Stock Tab */}
             {tab === 1 && (
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Producto</TableCell>
-                                <TableCell>Categoría</TableCell>
-                                <TableCell align="right">Stock Actual</TableCell>
-                                <TableCell align="right">Stock Mínimo</TableCell>
-                                <TableCell>Estado</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
+                <div className={`rounded-xl border overflow-x-auto ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                    <table className="w-full min-w-[600px]">
+                        <thead className={isDark ? 'bg-zinc-900' : 'bg-zinc-50'}>
+                            <tr>
+                                <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Producto</th>
+                                <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Categoría</th>
+                                <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Stock Actual</th>
+                                <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Stock Mínimo</th>
+                                <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody className={`divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
                             {lowStock?.map((product) => (
-                                <TableRow key={product.id}>
-                                    <TableCell>{product.name}</TableCell>
-                                    <TableCell>{product.category_name || '-'}</TableCell>
-                                    <TableCell align="right">
-                                        <Typography fontWeight={600} color={product.stock <= 0 ? 'error.main' : 'warning.main'}>
-                                            {product.stock}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell align="right">{product.min_stock}</TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={product.stock <= 0 ? 'Agotado' : 'Bajo Stock'}
-                                            size="small"
-                                            color={product.stock <= 0 ? 'error' : 'warning'}
-                                        />
-                                    </TableCell>
-                                </TableRow>
+                                <tr key={product.id} className={`transition-colors ${isDark ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
+                                    <td className={`px-4 py-3 text-sm ${isDark ? 'text-white' : 'text-zinc-900'}`}>{product.name}</td>
+                                    <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{product.category_name || '-'}</td>
+                                    <td className={`px-4 py-3 text-sm text-right font-semibold ${product.stock <= 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                                        {product.stock.toLocaleString()}
+                                    </td>
+                                    <td className={`px-4 py-3 text-sm text-right ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{product.min_stock.toLocaleString()}</td>
+                                    <td className="px-4 py-3">
+                                        <Chip color={product.stock <= 0 ? 'danger' : 'warning'} size="sm" variant="flat">
+                                            {product.stock <= 0 ? 'Agotado' : 'Bajo Stock'}
+                                        </Chip>
+                                    </td>
+                                </tr>
                             ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                            {(!lowStock || lowStock.length === 0) && (
+                                <tr><td colSpan={5} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>No hay productos con bajo stock</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             )}
 
-            {/* Create Movement Dialog */}
-            <Dialog open={createDialog} onClose={() => { setCreateDialog(false); reset(); }} maxWidth="sm" fullWidth>
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <DialogTitle sx={{ pb: 1 }}>
-                        <Stack direction="row" alignItems="center" spacing={1.5}>
-                            <Inventory2 sx={{ color: 'primary.main' }} />
-                            <Typography variant="h6" fontWeight={700}>Nuevo Movimiento de Inventario</Typography>
-                        </Stack>
-                    </DialogTitle>
-                    <DialogContent>
-                        <Stack spacing={3} sx={{ mt: 1 }}>
+            {/* Create Movement Modal */}
+            {createDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => { setCreateDialog(false); reset(); }}>
+                    <div className={`rounded-3xl border w-full max-w-lg mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
+                        <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-5">
+                            <span className="text-2xl">📦</span>
+                        </div>
+                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Nuevo Movimiento de Inventario</h2>
+                        <p className={`text-sm text-center mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Registra una entrada, salida o ajuste de stock</p>
+
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             {/* Product Search */}
-                            <Controller
-                                name="product_id"
-                                control={control}
-                                render={({ field }) => (
-                                    <Autocomplete
-                                        fullWidth
-                                        openOnFocus
-                                        options={products?.items || []}
-                                        getOptionLabel={(option: Product) => `${option.name} (Stock: ${option.stock})`}
-                                        value={products?.items.find((p) => p.id === field.value) || null}
-                                        onChange={(_e, newValue) => field.onChange(newValue?.id || 0)}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                label="Buscar producto"
-                                                placeholder="Escribe para buscar..."
-                                                error={!!errors.product_id}
-                                                helperText={errors.product_id?.message}
-                                            />
-                                        )}
-                                        renderOption={(props, option) => (
-                                            <li {...props} key={option.id}>
-                                                <Stack direction="row" justifyContent="space-between" width="100%" alignItems="center">
-                                                    <Typography>{option.name}</Typography>
-                                                    <Chip
-                                                        label={`Stock: ${option.stock}`}
-                                                        size="small"
-                                                        color={option.stock <= option.min_stock ? 'warning' : 'default'}
-                                                        variant="outlined"
-                                                        sx={{ ml: 1 }}
-                                                    />
-                                                </Stack>
-                                            </li>
-                                        )}
-                                        isOptionEqualToValue={(option, value) => option.id === value.id}
-                                        noOptionsText="No se encontraron productos"
-                                        filterOptions={(options, { inputValue }) => {
-                                            if (!inputValue) return options;
-                                            const lower = inputValue.toLowerCase();
-                                            return options.filter((o) => o.name.toLowerCase().includes(lower));
-                                        }}
-                                    />
+                            <div>
+                                <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Producto</label>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar producto..."
+                                    value={productSearch}
+                                    onChange={(e) => setProductSearch(e.target.value)}
+                                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                />
+                                {productSearch && filteredProducts.length > 0 && !selectedProduct && (
+                                    <div className={`mt-1 max-h-40 overflow-y-auto rounded-xl border ${isDark ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}`}>
+                                        {filteredProducts.slice(0, 8).map((p) => (
+                                            <button
+                                                key={p.id}
+                                                type="button"
+                                                className={`cursor-pointer w-full text-left px-4 py-2 text-sm flex justify-between items-center transition-colors ${isDark ? 'hover:bg-zinc-800 text-white' : 'hover:bg-zinc-50 text-zinc-900'}`}
+                                                onClick={() => { setValue('product_id', p.id); setProductSearch(p.name); }}
+                                            >
+                                                <span>{p.name}</span>
+                                                <Chip size="sm" variant="flat" color={p.stock <= p.min_stock ? 'warning' : 'default'}>
+                                                    Stock: {p.stock.toLocaleString()}
+                                                </Chip>
+                                            </button>
+                                        ))}
+                                    </div>
                                 )}
-                            />
+                                {errors.product_id && <p className="text-red-400 text-xs mt-1">{errors.product_id.message}</p>}
+                            </div>
 
                             {/* Selected Product Info */}
                             {selectedProduct && (
-                                <Paper
-                                    variant="outlined"
-                                    sx={{
-                                        p: 2,
-                                        borderColor: selectedProduct.stock <= selectedProduct.min_stock ? 'warning.main' : 'divider',
-                                        background: selectedProduct.stock <= selectedProduct.min_stock
-                                            ? 'rgba(255, 214, 10, 0.04)'
-                                            : 'rgba(10, 132, 255, 0.04)',
-                                    }}
-                                >
-                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                        <Box>
-                                            <Typography variant="body2" color="text.secondary">Producto seleccionado</Typography>
-                                            <Typography variant="subtitle1" fontWeight={600}>{selectedProduct.name}</Typography>
-                                        </Box>
-                                        <Box textAlign="right">
-                                            <Typography variant="body2" color="text.secondary">Stock actual</Typography>
-                                            <Typography
-                                                variant="h6"
-                                                fontWeight={700}
-                                                color={selectedProduct.stock <= selectedProduct.min_stock ? 'warning.main' : 'success.main'}
-                                            >
-                                                {selectedProduct.stock}
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-                                </Paper>
+                                <div className={`p-3 rounded-xl flex justify-between items-center ${isDark ? 'bg-zinc-800/60 border border-zinc-700' : 'bg-zinc-100 border border-zinc-200'}`}>
+                                    <div>
+                                        <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Producto seleccionado</p>
+                                        <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>{selectedProduct.name}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Stock actual</p>
+                                        <p className={`text-lg font-bold ${selectedProduct.stock <= selectedProduct.min_stock ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                            {selectedProduct.stock.toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
                             )}
 
-                            {/* Type and Quantity */}
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                <Controller
-                                    name="movement_type"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <FormControl fullWidth>
-                                            <InputLabel>Tipo de Movimiento</InputLabel>
-                                            <Select {...field} label="Tipo de Movimiento">
+                            {/* Type & Quantity */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Tipo de Movimiento</label>
+                                    <Controller
+                                        name="movement_type"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <select
+                                                value={field.value}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                className={`cursor-pointer w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-900'}`}
+                                            >
                                                 {Object.values(MovementType).filter((t) => t !== MovementType.VENTA).map((t) => (
-                                                    <MenuItem key={t} value={t}>
-                                                        <Stack direction="row" spacing={1} alignItems="center">
-                                                            <Typography>{movementTypeIcon[t]}</Typography>
-                                                            <Typography>{movementTypeLabel[t]}</Typography>
-                                                        </Stack>
-                                                    </MenuItem>
+                                                    <option key={t} value={t}>{movementTypeIcon[t]} {movementTypeLabel[t]}</option>
                                                 ))}
-                                            </Select>
-                                        </FormControl>
-                                    )}
-                                />
-                                <TextField
-                                    fullWidth
-                                    label="Cantidad"
-                                    type="number"
-                                    {...register('quantity', { valueAsNumber: true })}
-                                    error={!!errors.quantity}
-                                    helperText={errors.quantity?.message}
-                                    slotProps={{ htmlInput: { min: 1 } }}
-                                />
-                            </Stack>
+                                            </select>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Cantidad</label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        {...register('quantity', { valueAsNumber: true })}
+                                        placeholder="1"
+                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    />
+                                    {errors.quantity && <p className="text-red-400 text-xs mt-1">{errors.quantity.message}</p>}
+                                </div>
+                            </div>
 
-                            {/* Info alert based on type */}
+                            {/* Alert */}
                             {watchMovementType && watchMovementType !== MovementType.ENTRADA && selectedProduct && (
-                                <Alert
-                                    severity={watchMovementType === MovementType.AJUSTE ? 'info' : 'warning'}
-                                    sx={{ borderRadius: 2 }}
-                                >
-                                    {watchMovementType === MovementType.SALIDA && 'Se restará del stock actual del producto.'}
-                                    {watchMovementType === MovementType.PERDIDA && 'Se registrará como pérdida y se restará del stock.'}
-                                    {watchMovementType === MovementType.DESPERDICIO && 'Se registrará como desperdicio y se restará del stock.'}
-                                    {watchMovementType === MovementType.AJUSTE && 'Se ajustará el stock del producto.'}
-                                </Alert>
+                                <div className={`p-3 rounded-xl text-sm ${watchMovementType === MovementType.AJUSTE ? 'bg-blue-500/10 text-blue-300' : 'bg-amber-500/10 text-amber-300'}`}>
+                                    {watchMovementType === MovementType.SALIDA && '📤 Se restará del stock actual del producto.'}
+                                    {watchMovementType === MovementType.PERDIDA && '⚠️ Se registrará como pérdida y se restará del stock.'}
+                                    {watchMovementType === MovementType.DESPERDICIO && '🗑️ Se registrará como desperdicio y se restará del stock.'}
+                                    {watchMovementType === MovementType.AJUSTE && '🔄 Se ajustará el stock del producto.'}
+                                </div>
                             )}
 
                             {/* Reason */}
-                            <TextField
-                                fullWidth
-                                label="Razón del movimiento"
-                                multiline
-                                rows={3}
-                                {...register('reason')}
-                                placeholder="Describe el motivo del movimiento..."
-                            />
-                        </Stack>
-                    </DialogContent>
-                    <DialogActions sx={{ px: 3, pb: 2.5 }}>
-                        <Button onClick={() => { setCreateDialog(false); reset(); }}>Cancelar</Button>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            disabled={createMutation.isPending}
-                            startIcon={<Inventory2 />}
-                        >
-                            {createMutation.isPending ? 'Registrando...' : 'Registrar Movimiento'}
-                        </Button>
-                    </DialogActions>
-                </form>
-            </Dialog>
-        </Box>
+                            <div>
+                                <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Razón del movimiento</label>
+                                <textarea
+                                    {...register('reason')}
+                                    rows={3}
+                                    placeholder="Describe el motivo del movimiento..."
+                                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                />
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-3 pt-2">
+                                <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={() => { setCreateDialog(false); reset(); setProductSearch(''); }}>Cancelar</Button>
+                                <Button size="lg" color="primary" className="flex-1 cursor-pointer font-semibold" type="submit" isLoading={createMutation.isPending}>
+                                    Registrar Movimiento
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 

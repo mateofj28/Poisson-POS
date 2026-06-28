@@ -1,30 +1,5 @@
 import { useState } from 'react';
-import {
-    Box,
-    Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Button,
-    IconButton,
-    Chip,
-    TextField,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    CircularProgress,
-    Grid,
-} from '@mui/material';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Button, Chip, Spinner } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,7 +7,7 @@ import { z } from 'zod';
 import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
 import { Product } from '../types';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
 const productSchema = z.object({
@@ -47,6 +22,8 @@ type ProductForm = z.infer<typeof productSchema>;
 
 const ProductsPage = () => {
     const queryClient = useQueryClient();
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
     const [categoryFilter, setCategoryFilter] = useState<number | ''>('');
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState<Product | null>(null);
@@ -122,118 +99,204 @@ const ProductsPage = () => {
     };
 
     if (isLoading) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}><CircularProgress /></Box>;
+        return <div className="flex justify-center items-center h-64"><Spinner size="lg" /></div>;
     }
 
     return (
-        <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-                <Typography variant="h4">Productos</Typography>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <FormControl size="small" sx={{ minWidth: 150 }}>
-                        <InputLabel>Categoría</InputLabel>
-                        <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as number | '')} label="Categoría">
-                            <MenuItem value="">Todas</MenuItem>
-                            {categories?.items.map((cat) => (
-                                <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>Nuevo</Button>
-                </Box>
-            </Box>
-
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Nombre</TableCell>
-                            <TableCell>Categoría</TableCell>
-                            <TableCell align="right">Precio</TableCell>
-                            <TableCell align="right">Stock</TableCell>
-                            <TableCell>Estado</TableCell>
-                            <TableCell align="right">Acciones</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {data?.items.map((product) => (
-                            <TableRow key={product.id}>
-                                <TableCell>{product.name}</TableCell>
-                                <TableCell>{product.category_name || '-'}</TableCell>
-                                <TableCell align="right">${product.sale_price.toLocaleString()}</TableCell>
-                                <TableCell align="right">
-                                    <Chip
-                                        label={product.stock}
-                                        size="small"
-                                        color={product.stock <= 0 ? 'error' : product.stock <= product.min_stock ? 'warning' : 'success'}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Chip label={product.is_active ? 'Activo' : 'Inactivo'} size="small" color={product.is_active ? 'success' : 'default'} />
-                                </TableCell>
-                                <TableCell align="right">
-                                    <IconButton size="small" onClick={() => handleOpenEdit(product)}><Edit /></IconButton>
-                                    <IconButton size="small" color="error" onClick={() => setDeleteConfirm(product)}><Delete /></IconButton>
-                                </TableCell>
-                            </TableRow>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Productos</h1>
+                <div className="flex gap-3 items-center">
+                    <select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value ? Number(e.target.value) : '')}
+                        className={`cursor-pointer px-3 py-2 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-900'}`}
+                    >
+                        <option value="">Todas las categorías</option>
+                        {categories?.items.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                    </select>
+                    <Button color="primary" className="cursor-pointer font-medium" onPress={handleOpenCreate}>
+                        + Nuevo
+                    </Button>
+                </div>
+            </div>
 
-            <Dialog open={openForm} onClose={handleCloseForm} maxWidth="sm" fullWidth>
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <DialogTitle>{editing ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
-                    <DialogContent>
-                        <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
-                                <TextField fullWidth label="Nombre" {...register('name')} error={!!errors.name} helperText={errors.name?.message} />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Controller
-                                    name="category_id"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <FormControl fullWidth error={!!errors.category_id}>
-                                            <InputLabel>Categoría</InputLabel>
-                                            <Select {...field} label="Categoría">
-                                                {categories?.items.map((cat) => (
-                                                    <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    )}
+            {/* Table */}
+            <div className={`rounded-xl border overflow-x-auto ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                <table className="w-full min-w-[700px]">
+                    <thead className={isDark ? 'bg-zinc-900' : 'bg-zinc-50'}>
+                        <tr>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Nombre</th>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Categoría</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Precio</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Stock</th>
+                            <th className={`text-center px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Estado</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
+                        {data?.items.map((product) => (
+                            <tr key={product.id} className={`transition-colors ${isDark ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
+                                <td className={`px-4 py-3 text-sm font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{product.name}</td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{product.category_name || '-'}</td>
+                                <td className={`px-4 py-3 text-sm text-right font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>${product.sale_price.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-right">
+                                    <Chip
+                                        size="sm"
+                                        variant="flat"
+                                        color={product.stock <= 0 ? 'danger' : product.stock <= product.min_stock ? 'warning' : 'success'}
+                                    >
+                                        {product.stock.toLocaleString()}
+                                    </Chip>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                    <Chip size="sm" variant="flat" color={product.is_active ? 'success' : 'default'}>
+                                        {product.is_active ? 'Activo' : 'Inactivo'}
+                                    </Chip>
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                    <div className="flex gap-2 justify-end">
+                                        <button
+                                            onClick={() => handleOpenEdit(product)}
+                                            className={`cursor-pointer p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-zinc-700 text-zinc-400 hover:text-white' : 'hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900'}`}
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            onClick={() => setDeleteConfirm(product)}
+                                            className="cursor-pointer p-1.5 rounded-lg transition-colors hover:bg-red-500/10 text-red-400"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                        {(!data?.items || data.items.length === 0) && (
+                            <tr><td colSpan={6} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>No hay productos</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Create/Edit Modal */}
+            {openForm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={handleCloseForm}>
+                    <div className={`rounded-3xl border w-full max-w-lg mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
+                        <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-5">
+                            <span className="text-2xl">{editing ? '✏️' : '🛒'}</span>
+                        </div>
+                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                            {editing ? 'Editar Producto' : 'Nuevo Producto'}
+                        </h2>
+                        <p className={`text-sm text-center mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                            {editing ? 'Modifica los datos del producto' : 'Agrega un nuevo producto al inventario'}
+                        </p>
+
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                            <div>
+                                <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Nombre</label>
+                                <input
+                                    type="text"
+                                    {...register('name')}
+                                    placeholder="Nombre del producto"
+                                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
                                 />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <TextField fullWidth label="Precio de venta" type="number" inputProps={{ step: '0.01' }} {...register('sale_price', { valueAsNumber: true })} error={!!errors.sale_price} helperText={errors.sale_price?.message} />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <TextField fullWidth label="Stock" type="number" {...register('stock', { valueAsNumber: true })} />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <TextField fullWidth label="Stock mínimo" type="number" {...register('min_stock', { valueAsNumber: true })} />
-                            </Grid>
-                        </Grid>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseForm}>Cancelar</Button>
-                        <Button type="submit" variant="contained" disabled={createMutation.isPending || updateMutation.isPending}>
-                            {editing ? 'Actualizar' : 'Crear'}
-                        </Button>
-                    </DialogActions>
-                </form>
-            </Dialog>
+                                {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+                            </div>
 
-            <ConfirmDialog
-                open={!!deleteConfirm}
-                title="Eliminar Producto"
-                message={`¿Está seguro de eliminar ${deleteConfirm?.name}?`}
-                onConfirm={() => deleteConfirm && deleteMutation.mutate(deleteConfirm.id)}
-                onCancel={() => setDeleteConfirm(null)}
-                loading={deleteMutation.isPending}
-            />
-        </Box>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Categoría</label>
+                                    <Controller
+                                        name="category_id"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <select
+                                                value={field.value}
+                                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                                className={`cursor-pointer w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-900'}`}
+                                            >
+                                                <option value={0}>Seleccionar...</option>
+                                                {categories?.items.map((cat) => (
+                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    />
+                                    {errors.category_id && <p className="text-red-400 text-xs mt-1">{errors.category_id.message}</p>}
+                                </div>
+                                <div>
+                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Precio de venta</label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        {...register('sale_price', { valueAsNumber: true })}
+                                        placeholder="$0"
+                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    />
+                                    {errors.sale_price && <p className="text-red-400 text-xs mt-1">{errors.sale_price.message}</p>}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Stock</label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        {...register('stock', { valueAsNumber: true })}
+                                        placeholder="0"
+                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Stock mínimo</label>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        {...register('min_stock', { valueAsNumber: true })}
+                                        placeholder="5"
+                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={handleCloseForm}>Cancelar</Button>
+                                <Button size="lg" color="primary" className="flex-1 cursor-pointer font-semibold" type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>
+                                    {editing ? 'Actualizar' : 'Crear'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirm Modal */}
+            {deleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setDeleteConfirm(null)}>
+                    <div className={`rounded-3xl border w-full max-w-sm mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-5">
+                            <span className="text-2xl">🗑️</span>
+                        </div>
+                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Eliminar Producto</h2>
+                        <p className={`text-sm text-center mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                            ¿Está seguro de eliminar <span className="font-semibold">{deleteConfirm.name}</span>?
+                        </p>
+                        <div className="flex gap-3">
+                            <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={() => setDeleteConfirm(null)}>Cancelar</Button>
+                            <Button size="lg" color="danger" className="flex-1 cursor-pointer font-semibold" isLoading={deleteMutation.isPending} onPress={() => deleteMutation.mutate(deleteConfirm.id)}>
+                                Eliminar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
