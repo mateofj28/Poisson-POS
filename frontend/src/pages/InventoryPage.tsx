@@ -159,11 +159,11 @@ const InventoryPage = () => {
                                             {movementTypeIcon[mov.movement_type]} {movementTypeLabel[mov.movement_type]}
                                         </Chip>
                                     </td>
-                                    <td className={`px-4 py-3 text-sm text-right font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                                    <td className="px-4 py-3 text-sm text-right font-semibold text-red-400">
                                         {mov.movement_type === MovementType.ENTRADA ? '+' : '-'}{mov.quantity.toLocaleString()}
                                     </td>
                                     <td className={`px-4 py-3 text-sm text-right ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{mov.previous_stock.toLocaleString()}</td>
-                                    <td className={`px-4 py-3 text-sm text-right font-semibold ${mov.new_stock <= 0 ? 'text-red-400' : isDark ? 'text-white' : 'text-zinc-900'}`}>
+                                    <td className="px-4 py-3 text-sm text-right font-semibold text-emerald-400">
                                         {mov.new_stock.toLocaleString()}
                                     </td>
                                     <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{mov.reason || '-'}</td>
