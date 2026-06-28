@@ -302,6 +302,11 @@ const SalesPage = () => {
                                             <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
                                                 <div className={`h-full rounded-full transition-all ${isPaymentComplete ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${Math.min((totalPayments / selectedOrderData.total) * 100, 100)}%` }}></div>
                                             </div>
+                                            {!isPaymentComplete && (
+                                                <p className={`text-xs mt-1.5 font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                                                    Faltan: ${(selectedOrderData.total - totalPayments).toLocaleString()}
+                                                </p>
+                                            )}
                                             {isPaymentComplete && totalPayments > selectedOrderData.total && (
                                                 <div className={`mt-2 flex items-center justify-between p-2 rounded-lg ${isDark ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-amber-50 border border-amber-200'}`}>
                                                     <span className="text-xs text-amber-400 font-medium">💰 Devolver al cliente:</span>
@@ -313,6 +318,14 @@ const SalesPage = () => {
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Clear all payments */}
+                                    <button
+                                        onClick={() => setPayments([])}
+                                        className={`w-full text-center text-xs py-2 rounded-lg cursor-pointer transition-colors ${isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'}`}
+                                    >
+                                        🗑 Eliminar todos los pagos
+                                    </button>
                                 </div>
                             )}
 
