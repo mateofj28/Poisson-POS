@@ -1,44 +1,14 @@
 import { useState } from 'react';
-import {
-    Box,
-    Typography,
-    Card,
-    CardContent,
-    Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    CircularProgress,
-    Chip,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Divider,
-    Stack,
-    Alert,
-} from '@mui/material';
-import {
-    PointOfSale,
-    LockOpen,
-    Lock,
-    AccessTime,
-    Person,
-    AttachMoney,
-    CreditCard,
-    TrendingUp,
-} from '@mui/icons-material';
+import { Button, Chip, Spinner, Card, CardContent } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cashRegisterService } from '../services/cash-register.service';
+import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
 const CashRegisterPage = () => {
     const queryClient = useQueryClient();
+    const { theme } = useThemeStore();
+    const isDark = theme === 'dark';
     const [openDialog, setOpenDialog] = useState(false);
     const [closeDialog, setCloseDialog] = useState(false);
     const [openingAmount, setOpeningAmount] = useState('');
@@ -60,7 +30,7 @@ const CashRegisterPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['cash-register-active'] });
             queryClient.invalidateQueries({ queryKey: ['cash-register-history'] });
-            toast.success('Caja abierta exitosamente');
+            toast.success('Caja abierta');
             setOpenDialog(false);
             setOpeningAmount('');
             setNotes('');
@@ -76,7 +46,7 @@ const CashRegisterPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['cash-register-active'] });
             queryClient.invalidateQueries({ queryKey: ['cash-register-history'] });
-            toast.success('Caja cerrada exitosamente');
+            toast.success('Caja cerrada');
             setCloseDialog(false);
             setClosingAmount('');
             setNotes('');
@@ -85,402 +55,205 @@ const CashRegisterPage = () => {
     });
 
     if (loadingActive || loadingHistory) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}><CircularProgress /></Box>;
+        return <div className="flex justify-center items-center h-64"><Spinner size="lg" /></div>;
     }
 
     return (
-        <Box>
-            <Typography variant="h4" sx={{ mb: 3 }}>Caja Registradora</Typography>
+        <div className="space-y-6">
+            <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Caja Registradora</h1>
 
-            {/* Active Register Status */}
-            <Card sx={{ mb: 4, overflow: 'visible' }}>
-                <CardContent sx={{ p: 3 }}>
-                    {/* Header */}
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                            <Box
-                                sx={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 3,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    background: activeRegister
-                                        ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.2), rgba(48, 209, 88, 0.05))'
-                                        : 'linear-gradient(135deg, rgba(255, 69, 58, 0.2), rgba(255, 69, 58, 0.05))',
-                                    border: `1px solid ${activeRegister ? 'rgba(48, 209, 88, 0.3)' : 'rgba(255, 69, 58, 0.3)'}`,
-                                }}
-                            >
-                                <PointOfSale sx={{ color: activeRegister ? 'success.main' : 'error.main' }} />
-                            </Box>
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Estado de caja</Typography>
-                                <Chip
-                                    label={activeRegister ? 'Abierta' : 'Cerrada'}
-                                    color={activeRegister ? 'success' : 'error'}
-                                    size="small"
-                                    sx={{ fontWeight: 600 }}
-                                />
-                            </Box>
-                        </Stack>
-
+            {/* Active Register Card */}
+            <Card className={`border-none shadow-none ${isDark ? 'bg-[#18181b]' : 'bg-[#f4f4f5]'}`}>
+                <CardContent className="p-5 sm:p-6">
+                    {/* Status Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${activeRegister ? 'bg-emerald-500/15' : 'bg-red-500/15'}`}>
+                                {activeRegister ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-emerald-400"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-400"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                                )}
+                            </div>
+                            <div>
+                                <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Estado de caja</p>
+                                <Chip color={activeRegister ? 'success' : 'danger'} size="sm" variant="flat">{activeRegister ? 'Abierta' : 'Cerrada'}</Chip>
+                            </div>
+                        </div>
                         {!activeRegister ? (
-                            <Button
-                                variant="contained"
-                                color="success"
-                                startIcon={<LockOpen />}
-                                onClick={() => setOpenDialog(true)}
-                                sx={{ borderRadius: 3, px: 3 }}
-                            >
-                                Abrir Caja
+                            <Button color="success" className="cursor-pointer font-medium" onPress={() => setOpenDialog(true)}>
+                                🔓 Abrir Caja
                             </Button>
                         ) : (
-                            <Button
-                                variant="contained"
-                                color="error"
-                                startIcon={<Lock />}
-                                onClick={() => setCloseDialog(true)}
-                                sx={{ borderRadius: 3, px: 3 }}
-                            >
-                                Cerrar Caja
+                                <Button color="danger" className="cursor-pointer font-medium" onPress={() => setCloseDialog(true)}>
+                                    🔒 Cerrar Caja
                             </Button>
                         )}
-                    </Stack>
+                    </div>
 
                     {activeRegister ? (
                         <>
-                            {/* Stats Grid */}
-                            <Box
-                                sx={{
-                                    display: 'grid',
-                                    gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-                                    gap: 2,
-                                    mb: 3,
-                                }}
-                            >
-                                <Paper
-                                    variant="outlined"
-                                    sx={{
-                                        p: 2,
-                                        textAlign: 'center',
-                                        background: 'rgba(10, 132, 255, 0.04)',
-                                        borderColor: 'rgba(10, 132, 255, 0.2)',
-                                    }}
-                                >
-                                    <AttachMoney sx={{ color: 'primary.main', fontSize: 28, mb: 0.5 }} />
-                                    <Typography variant="body2" color="text.secondary">Monto Apertura</Typography>
-                                    <Typography variant="h6" fontWeight={700}>
-                                        ${activeRegister.opening_amount.toLocaleString()}
-                                    </Typography>
-                                </Paper>
+                            {/* Stats */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                                <div className={`p-3 rounded-xl ${isDark ? 'bg-zinc-800/60' : 'bg-white'}`}>
+                                    <p className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Apertura</p>
+                                    <p className={`text-lg font-bold mt-0.5 ${isDark ? 'text-white' : 'text-zinc-900'}`}>${activeRegister.opening_amount.toLocaleString()}</p>
+                                </div>
+                                <div className={`p-3 rounded-xl ${isDark ? 'bg-zinc-800/60' : 'bg-white'}`}>
+                                    <p className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Ventas</p>
+                                    <p className="text-lg font-bold mt-0.5 text-emerald-400">${activeRegister.total_sales.toLocaleString()}</p>
+                                </div>
+                                <div className={`p-3 rounded-xl ${isDark ? 'bg-zinc-800/60' : 'bg-white'}`}>
+                                    <p className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Efectivo</p>
+                                    <p className={`text-lg font-bold mt-0.5 ${isDark ? 'text-white' : 'text-zinc-900'}`}>${activeRegister.total_cash_sales.toLocaleString()}</p>
+                                </div>
+                                <div className={`p-3 rounded-xl ${isDark ? 'bg-zinc-800/60' : 'bg-white'}`}>
+                                    <p className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Digital</p>
+                                    <p className={`text-lg font-bold mt-0.5 ${isDark ? 'text-white' : 'text-zinc-900'}`}>${activeRegister.total_digital_sales.toLocaleString()}</p>
+                                </div>
+                            </div>
 
-                                <Paper
-                                    variant="outlined"
-                                    sx={{
-                                        p: 2,
-                                        textAlign: 'center',
-                                        background: 'rgba(48, 209, 88, 0.04)',
-                                        borderColor: 'rgba(48, 209, 88, 0.2)',
-                                    }}
-                                >
-                                    <TrendingUp sx={{ color: 'success.main', fontSize: 28, mb: 0.5 }} />
-                                    <Typography variant="body2" color="text.secondary">Ventas Totales</Typography>
-                                    <Typography variant="h6" fontWeight={700} color="success.main">
-                                        ${activeRegister.total_sales.toLocaleString()}
-                                    </Typography>
-                                </Paper>
-
-                                <Paper
-                                    variant="outlined"
-                                    sx={{
-                                        p: 2,
-                                        textAlign: 'center',
-                                        background: 'rgba(48, 209, 88, 0.04)',
-                                        borderColor: 'rgba(48, 209, 88, 0.15)',
-                                    }}
-                                >
-                                    <AttachMoney sx={{ color: 'success.light', fontSize: 28, mb: 0.5 }} />
-                                    <Typography variant="body2" color="text.secondary">Ventas Efectivo</Typography>
-                                    <Typography variant="h6" fontWeight={700}>
-                                        ${activeRegister.total_cash_sales.toLocaleString()}
-                                    </Typography>
-                                </Paper>
-
-                                <Paper
-                                    variant="outlined"
-                                    sx={{
-                                        p: 2,
-                                        textAlign: 'center',
-                                        background: 'rgba(94, 92, 230, 0.04)',
-                                        borderColor: 'rgba(94, 92, 230, 0.2)',
-                                    }}
-                                >
-                                    <CreditCard sx={{ color: 'secondary.main', fontSize: 28, mb: 0.5 }} />
-                                    <Typography variant="body2" color="text.secondary">Ventas Digitales</Typography>
-                                    <Typography variant="h6" fontWeight={700}>
-                                        ${activeRegister.total_digital_sales.toLocaleString()}
-                                    </Typography>
-                                </Paper>
-                            </Box>
-
-                            {/* Meta info */}
-                            <Divider sx={{ mb: 2 }} />
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
-                                <Stack direction="row" alignItems="center" spacing={1}>
-                                    <AccessTime sx={{ fontSize: 18, color: 'text.secondary' }} />
-                                    <Typography variant="body2" color="text.secondary">
-                                        Apertura: {new Date(activeRegister.opened_at).toLocaleString('es-CO')}
-                                    </Typography>
-                                </Stack>
-                                <Stack direction="row" alignItems="center" spacing={1}>
-                                    <Person sx={{ fontSize: 18, color: 'text.secondary' }} />
-                                    <Typography variant="body2" color="text.secondary">
-                                        {activeRegister.employee_name || 'Sin asignar'}
-                                    </Typography>
-                                </Stack>
-                            </Stack>
+                            {/* Meta */}
+                            <div className={`flex flex-wrap gap-4 text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                                <span>⏱ {new Date(activeRegister.opened_at).toLocaleString('es-CO')}</span>
+                                <span>👤 {activeRegister.employee_name || '-'}</span>
+                            </div>
                         </>
                     ) : (
-                        <Alert severity="info" sx={{ borderRadius: 3 }}>
-                            No hay caja abierta actualmente. Abre una caja para comenzar a registrar ventas.
-                        </Alert>
+                            <div className={`p-4 rounded-xl text-sm ${isDark ? 'bg-blue-500/10 text-blue-300' : 'bg-blue-50 text-blue-700'}`}>
+                                ℹ️ No hay caja abierta. Abre una caja para comenzar a registrar ventas.
+                            </div>
                     )}
                 </CardContent>
             </Card>
 
             {/* History */}
-            <Typography variant="h5" sx={{ mb: 2 }} fontWeight={600}>Historial</Typography>
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Empleado</TableCell>
-                            <TableCell align="right">Apertura</TableCell>
-                            <TableCell align="right">Cierre</TableCell>
-                            <TableCell align="right">Ventas</TableCell>
-                            <TableCell align="right">Diferencia</TableCell>
-                            <TableCell>Estado</TableCell>
-                            <TableCell>Fecha</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Historial</h2>
+            <div className={`rounded-xl border overflow-x-auto ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                <table className="w-full min-w-[700px]">
+                    <thead className={isDark ? 'bg-zinc-900' : 'bg-zinc-50'}>
+                        <tr>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Empleado</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Apertura</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Cierre</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Ventas</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Diferencia</th>
+                            <th className={`text-center px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Estado</th>
+                            <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
                         {history?.items.map((reg) => (
-                            <TableRow key={reg.id}>
-                                <TableCell>
-                                    <Stack direction="row" alignItems="center" spacing={1}>
-                                        <Person sx={{ fontSize: 16, color: 'text.secondary' }} />
-                                        <Typography variant="body2">{reg.employee_name || '-'}</Typography>
-                                    </Stack>
-                                </TableCell>
-                                <TableCell align="right">
-                                    <Typography variant="body2" fontWeight={500}>${reg.opening_amount.toLocaleString()}</Typography>
-                                </TableCell>
-                                <TableCell align="right">
-                                    <Typography variant="body2" fontWeight={500}>
-                                        {reg.closing_amount !== null ? `$${reg.closing_amount.toLocaleString()}` : '-'}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell align="right">
-                                    <Typography variant="body2" fontWeight={600} color="success.main">
-                                        ${reg.total_sales.toLocaleString()}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell align="right">
+                            <tr key={reg.id} className={`transition-colors ${isDark ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-white' : 'text-zinc-900'}`}>{reg.employee_name || '-'}</td>
+                                <td className={`px-4 py-3 text-sm text-right ${isDark ? 'text-white' : 'text-zinc-900'}`}>${reg.opening_amount.toLocaleString()}</td>
+                                <td className={`px-4 py-3 text-sm text-right ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>{reg.closing_amount !== null ? `$${reg.closing_amount.toLocaleString()}` : '-'}</td>
+                                <td className="px-4 py-3 text-sm text-right text-emerald-400 font-medium">${reg.total_sales.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-right">
                                     {reg.difference !== null ? (
-                                        <Chip
-                                            label={`${reg.difference >= 0 ? '+' : ''}$${reg.difference.toLocaleString()}`}
-                                            size="small"
-                                            color={reg.difference >= 0 ? 'success' : 'error'}
-                                            variant="outlined"
-                                            sx={{ fontWeight: 600 }}
-                                        />
-                                    ) : '-'}
-                                </TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={reg.is_open ? 'Abierta' : 'Cerrada'}
-                                        size="small"
-                                        color={reg.is_open ? 'success' : 'default'}
-                                        variant={reg.is_open ? 'filled' : 'outlined'}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {new Date(reg.opened_at).toLocaleString('es-CO')}
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
+                                        <Chip color={reg.difference >= 0 ? 'success' : 'danger'} size="sm" variant="flat">
+                                            {reg.difference >= 0 ? '+' : ''}${reg.difference.toLocaleString()}
+                                        </Chip>
+                                    ) : <span className={isDark ? 'text-zinc-500' : 'text-zinc-400'}>-</span>}
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                    <Chip color={reg.is_open ? 'success' : 'default'} size="sm" variant={reg.is_open ? 'flat' : 'flat'}>
+                                        {reg.is_open ? 'Abierta' : 'Cerrada'}
+                                    </Chip>
+                                </td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(reg.opened_at).toLocaleString('es-CO')}</td>
+                            </tr>
                         ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        {(!history?.items || history.items.length === 0) && (
+                            <tr><td colSpan={7} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>No hay registros</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
             {/* Open Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="xs" fullWidth>
-                <DialogTitle sx={{ pb: 1 }}>
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Box
-                            sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 2.5,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: 'linear-gradient(135deg, rgba(48, 209, 88, 0.2), rgba(48, 209, 88, 0.05))',
-                                border: '1px solid rgba(48, 209, 88, 0.3)',
-                            }}
-                        >
-                            <LockOpen sx={{ color: 'success.main', fontSize: 20 }} />
-                        </Box>
-                        <Typography variant="h6" fontWeight={700}>Abrir Caja</Typography>
-                    </Stack>
-                </DialogTitle>
-                <DialogContent>
-                    <Stack spacing={2.5} sx={{ mt: 1.5 }}>
-                        <Alert severity="info" sx={{ borderRadius: 2 }}>
-                            Ingresa el monto inicial de efectivo en la caja.
-                        </Alert>
-                        <TextField
-                            fullWidth
-                            label="Monto de apertura"
-                            type="number"
-                            value={openingAmount}
-                            onChange={(e) => setOpeningAmount(e.target.value)}
-                            placeholder="0"
-                            slotProps={{ htmlInput: { min: 0 } }}
+            {openDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setOpenDialog(false)}>
+                    <div className={`rounded-3xl border w-full max-w-md mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-emerald-400"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                        </div>
+                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Abrir Caja</h2>
+                        <p className={`text-sm text-center mb-8 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Ingresa el monto inicial de efectivo</p>
+
+                        <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Monto de apertura</label>
+                        <input
+                            type="text" inputMode="numeric"
+                            value={openingAmount ? Number(openingAmount).toLocaleString() : ''}
+                            onChange={(e) => setOpeningAmount(e.target.value.replace(/[^0-9]/g, ''))}
+                            placeholder="$0"
+                            className={`w-full px-4 py-3.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all mb-4 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
                         />
-                        <TextField
-                            fullWidth
-                            label="Notas (opcional)"
-                            multiline
-                            rows={2}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Observaciones..."
+                        <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Notas (opcional)</label>
+                        <input
+                            value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones..."
+                            className={`w-full px-4 py-3.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
                         />
-                    </Stack>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2.5 }}>
-                    <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
-                    <Button
-                        variant="contained"
-                        color="success"
-                        onClick={() => openMutation.mutate()}
-                        disabled={!openingAmount || openMutation.isPending}
-                        startIcon={<LockOpen />}
-                    >
-                        {openMutation.isPending ? 'Abriendo...' : 'Abrir Caja'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                        <div className="flex gap-3 mt-8">
+                            <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={() => setOpenDialog(false)}>Cancelar</Button>
+                            <Button size="lg" color="success" className="flex-1 cursor-pointer font-semibold" isLoading={openMutation.isPending} isDisabled={!openingAmount} onPress={() => openMutation.mutate()}>Abrir Caja</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Close Dialog */}
-            <Dialog open={closeDialog} onClose={() => setCloseDialog(false)} maxWidth="xs" fullWidth>
-                <DialogTitle sx={{ pb: 1 }}>
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Box
-                            sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 2.5,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: 'linear-gradient(135deg, rgba(255, 69, 58, 0.2), rgba(255, 69, 58, 0.05))',
-                                border: '1px solid rgba(255, 69, 58, 0.3)',
-                            }}
-                        >
-                            <Lock sx={{ color: 'error.main', fontSize: 20 }} />
-                        </Box>
-                        <Typography variant="h6" fontWeight={700}>Cerrar Caja</Typography>
-                    </Stack>
-                </DialogTitle>
-                <DialogContent>
-                    <Stack spacing={2.5} sx={{ mt: 1.5 }}>
+            {closeDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setCloseDialog(false)}>
+                    <div className={`rounded-3xl border w-full max-w-md mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-red-400"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                        </div>
+                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Cerrar Caja</h2>
+                        <p className={`text-sm text-center mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Ingresa el conteo de efectivo real</p>
+
                         {activeRegister && (
-                            <Paper
-                                variant="outlined"
-                                sx={{
-                                    p: 2,
-                                    borderColor: 'rgba(10, 132, 255, 0.2)',
-                                    background: 'rgba(10, 132, 255, 0.04)',
-                                }}
-                            >
-                                <Stack spacing={1}>
-                                    <Stack direction="row" justifyContent="space-between">
-                                        <Typography variant="body2" color="text.secondary">Apertura</Typography>
-                                        <Typography variant="body2" fontWeight={600}>${activeRegister.opening_amount.toLocaleString()}</Typography>
-                                    </Stack>
-                                    <Stack direction="row" justifyContent="space-between">
-                                        <Typography variant="body2" color="text.secondary">Ventas en efectivo</Typography>
-                                        <Typography variant="body2" fontWeight={600}>${activeRegister.total_cash_sales.toLocaleString()}</Typography>
-                                    </Stack>
-                                    <Divider />
-                                    <Stack direction="row" justifyContent="space-between">
-                                        <Typography variant="body2" fontWeight={600}>Efectivo esperado</Typography>
-                                        <Typography variant="body1" fontWeight={700} color="primary.main">
-                                            ${(activeRegister.opening_amount + activeRegister.total_cash_sales).toLocaleString()}
-                                        </Typography>
-                                    </Stack>
-                                </Stack>
-                            </Paper>
+                            <div className={`p-3 rounded-xl mb-5 space-y-1.5 text-xs font-mono ${isDark ? 'bg-zinc-800/60 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
+                                <div className="flex justify-between"><span>Apertura:</span><span className="font-semibold">${activeRegister.opening_amount.toLocaleString()}</span></div>
+                                <div className="flex justify-between"><span>Ventas efectivo:</span><span className="font-semibold">${activeRegister.total_cash_sales.toLocaleString()}</span></div>
+                                <div className={`flex justify-between pt-1.5 border-t ${isDark ? 'border-zinc-700' : 'border-zinc-200'}`}><span className="font-bold">Esperado:</span><span className="font-bold text-blue-400">${(activeRegister.opening_amount + activeRegister.total_cash_sales).toLocaleString()}</span></div>
+                            </div>
                         )}
-                        <TextField
-                            fullWidth
-                            label="Conteo de efectivo real"
-                            type="number"
-                            value={closingAmount}
-                            onChange={(e) => setClosingAmount(e.target.value)}
-                            placeholder="Cuenta el efectivo en caja"
-                            slotProps={{ htmlInput: { min: 0 } }}
+
+                        <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Conteo real de efectivo</label>
+                        <input
+                            type="text" inputMode="numeric"
+                            value={closingAmount ? Number(closingAmount).toLocaleString() : ''}
+                            onChange={(e) => setClosingAmount(e.target.value.replace(/[^0-9]/g, ''))}
+                            placeholder="$0"
+                            className={`w-full px-4 py-3.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all mb-3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
                         />
-                        {closingAmount && activeRegister && (
-                            <Alert
-                                severity={
-                                    Number(closingAmount) === (activeRegister.opening_amount + activeRegister.total_cash_sales)
-                                        ? 'success'
-                                        : Number(closingAmount) > (activeRegister.opening_amount + activeRegister.total_cash_sales)
-                                            ? 'info'
-                                            : 'warning'
-                                }
-                                sx={{ borderRadius: 2 }}
-                            >
-                                {(() => {
-                                    const expected = activeRegister.opening_amount + activeRegister.total_cash_sales;
-                                    const diff = Number(closingAmount) - expected;
-                                    if (diff === 0) return 'El conteo coincide con lo esperado ✓';
-                                    if (diff > 0) return `Sobrante de $${diff.toLocaleString()}`;
-                                    return `Faltante de $${Math.abs(diff).toLocaleString()}`;
-                                })()}
-                            </Alert>
-                        )}
-                        <TextField
-                            fullWidth
-                            label="Notas de cierre (opcional)"
-                            multiline
-                            rows={2}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Observaciones del cierre..."
+
+                        {closingAmount && activeRegister && (() => {
+                            const expected = activeRegister.opening_amount + activeRegister.total_cash_sales;
+                            const diff = Number(closingAmount) - expected;
+                            return (
+                                <div className={`p-3 rounded-xl text-sm mb-4 ${diff === 0 ? 'bg-emerald-500/10 text-emerald-400' : diff > 0 ? 'bg-blue-500/10 text-blue-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                                    {diff === 0 && '✓ El conteo coincide con lo esperado'}
+                                    {diff > 0 && `↑ Sobrante de $${diff.toLocaleString()}`}
+                                    {diff < 0 && `↓ Faltante de $${Math.abs(diff).toLocaleString()}`}
+                                </div>
+                            );
+                        })()}
+
+                        <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Notas (opcional)</label>
+                        <input
+                            value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones..."
+                            className={`w-full px-4 py-3.5 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
                         />
-                    </Stack>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2.5 }}>
-                    <Button onClick={() => setCloseDialog(false)}>Cancelar</Button>
-                    <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => closeMutation.mutate()}
-                        disabled={!closingAmount || closeMutation.isPending}
-                        startIcon={<Lock />}
-                    >
-                        {closeMutation.isPending ? 'Cerrando...' : 'Cerrar Caja'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+                        <div className="flex gap-3 mt-8">
+                            <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={() => setCloseDialog(false)}>Cancelar</Button>
+                            <Button size="lg" color="danger" className="flex-1 cursor-pointer font-semibold" isLoading={closeMutation.isPending} isDisabled={!closingAmount} onPress={() => closeMutation.mutate()}>Cerrar Caja</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
