@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Chip, Spinner } from '@heroui/react';
+import { Button, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -275,20 +275,32 @@ const InventoryPage = () => {
                             {/* Type & Quantity */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Tipo de Movimiento</label>
                                     <Controller
                                         name="movement_type"
                                         control={control}
                                         render={({ field }) => (
-                                            <select
-                                                value={field.value}
-                                                onChange={(e) => field.onChange(e.target.value)}
-                                                className={`cursor-pointer w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-900'}`}
+                                            <Select
+                                                className="w-full"
+                                                placeholder="Seleccionar..."
+                                                selectedKey={field.value}
+                                                onSelectionChange={(key) => field.onChange(key)}
                                             >
-                                                {Object.values(MovementType).filter((t) => t !== MovementType.VENTA).map((t) => (
-                                                    <option key={t} value={t}>{movementTypeIcon[t]} {movementTypeLabel[t]}</option>
-                                                ))}
-                                            </select>
+                                                <Label>Tipo de Movimiento</Label>
+                                                <Select.Trigger>
+                                                    <Select.Value />
+                                                    <Select.Indicator />
+                                                </Select.Trigger>
+                                                <Select.Popover>
+                                                    <ListBox>
+                                                        {Object.values(MovementType).filter((t) => t !== MovementType.VENTA).map((t) => (
+                                                            <ListBox.Item key={t} id={t} textValue={movementTypeLabel[t]}>
+                                                                {movementTypeIcon[t]} {movementTypeLabel[t]}
+                                                                <ListBox.ItemIndicator />
+                                                            </ListBox.Item>
+                                                        ))}
+                                                    </ListBox>
+                                                </Select.Popover>
+                                            </Select>
                                         )}
                                     />
                                 </div>
