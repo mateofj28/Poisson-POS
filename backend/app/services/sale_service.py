@@ -68,6 +68,14 @@ class SaleService:
                 detail="No se puede generar venta de un pedido cancelado",
             )
 
+        # Check if order already has a sale
+        existing_sale = self.db.query(Sale).filter(Sale.order_id == data.order_id).first()
+        if existing_sale:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Este pedido ya tiene una venta registrada",
+            )
+
         # Validate payment amounts match total
         total_payments = sum(p.amount for p in data.payments)
         if round(total_payments, 2) < round(order.total, 2):

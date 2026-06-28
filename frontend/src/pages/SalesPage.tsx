@@ -46,6 +46,11 @@ const SalesPage = () => {
         queryFn: () => orderService.getAll({ limit: 50 }),
     });
 
+    // Filter orders that haven't been sold yet (not ENTREGADO or CANCELADO)
+    const availableOrders = orders?.items.filter(
+        (o) => o.status !== OrderStatus.ENTREGADO && o.status !== OrderStatus.CANCELADO
+    ) || [];
+
     const createMutation = useMutation({
         mutationFn: () => saleService.create({
             order_id: selectedOrder,
@@ -93,7 +98,7 @@ const SalesPage = () => {
         setPayments(payments.filter((_, i) => i !== index));
     };
 
-    const selectedOrderData = orders?.items.find((o) => o.id === selectedOrder);
+    const selectedOrderData = availableOrders.find((o) => o.id === selectedOrder);
     const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
     const isPaymentComplete = selectedOrderData ? totalPayments >= selectedOrderData.total : false;
 
@@ -193,7 +198,7 @@ const SalesPage = () => {
                                 </Select.Trigger>
                                 <Select.Popover>
                                     <ListBox>
-                                        {(orders?.items || []).map((o) => (
+                                        {availableOrders.map((o) => (
                                             <ListBox.Item key={o.id} id={String(o.id)} textValue={`Pedido #${o.id}`}>
                                                 Pedido #{o.id} — Mesa {o.table_number} — ${o.total.toLocaleString()}
                                                 <ListBox.ItemIndicator />
