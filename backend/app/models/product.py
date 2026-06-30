@@ -17,7 +17,13 @@ class Product(Base, TimestampMixin, SoftDeleteMixin):
     barrel_id = Column(Integer, ForeignKey("barrels.id"), nullable=True)
 
     # Relationships
-    category = relationship("Category", back_populates="products")
+    category = relationship("Category", back_populates="products", lazy="joined")
     barrel = relationship("Barrel", back_populates="product")
     order_items = relationship("OrderItem", back_populates="product")
     inventory_movements = relationship("InventoryMovement", back_populates="product")
+
+    @property
+    def category_name(self):
+        if self.category:
+            return self.category.name
+        return None
