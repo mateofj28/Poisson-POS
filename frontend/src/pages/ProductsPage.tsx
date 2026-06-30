@@ -249,12 +249,19 @@ const ProductsPage = () => {
                                 </div>
                                 <div>
                                     <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Precio de venta</label>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        {...register('sale_price', { valueAsNumber: true })}
-                                        placeholder="$0"
-                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    <Controller
+                                        name="sale_price"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={field.value ? Number(field.value).toLocaleString() : ''}
+                                                onChange={(e) => field.onChange(Number(e.target.value.replace(/[^0-9]/g, '')) || 0)}
+                                                placeholder="Ej: 15.000"
+                                                className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                            />
+                                        )}
                                     />
                                     {errors.sale_price && <p className="text-red-400 text-xs mt-1">{errors.sale_price.message}</p>}
                                 </div>
@@ -263,22 +270,36 @@ const ProductsPage = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Stock</label>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        {...register('stock', { valueAsNumber: true })}
-                                        placeholder="0"
-                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    <Controller
+                                        name="stock"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={field.value ? Number(field.value).toLocaleString() : ''}
+                                                onChange={(e) => field.onChange(Number(e.target.value.replace(/[^0-9]/g, '')) || 0)}
+                                                placeholder="Ej: 50"
+                                                className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                            />
+                                        )}
                                     />
                                 </div>
                                 <div>
                                     <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Stock mínimo</label>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        {...register('min_stock', { valueAsNumber: true })}
-                                        placeholder="5"
-                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    <Controller
+                                        name="min_stock"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={field.value ? Number(field.value).toLocaleString() : ''}
+                                                onChange={(e) => field.onChange(Number(e.target.value.replace(/[^0-9]/g, '')) || 0)}
+                                                placeholder="Ej: 5"
+                                                className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                            />
+                                        )}
                                     />
                                 </div>
                             </div>
