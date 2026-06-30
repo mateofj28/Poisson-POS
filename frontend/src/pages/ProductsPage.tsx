@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Chip, Spinner } from '@heroui/react';
+import { Button, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -108,16 +108,26 @@ const ProductsPage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Productos</h1>
                 <div className="flex gap-3 items-center">
-                    <select
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value ? Number(e.target.value) : '')}
-                        className={`cursor-pointer px-3 py-2 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-900'}`}
+                    <Select
+                        className="w-[200px]"
+                        placeholder="Todas las categorías"
+                        selectedKey={categoryFilter ? String(categoryFilter) : undefined}
+                        onSelectionChange={(key) => setCategoryFilter(key ? Number(key) : '')}
                     >
-                        <option value="">Todas las categorías</option>
-                        {categories?.items.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                    </select>
+                        <Label>Categoría</Label>
+                        <Select.Trigger>
+                            <Select.Value />
+                            <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                            <ListBox>
+                                <ListBox.Item id="" textValue="Todas">Todas las categorías<ListBox.ItemIndicator /></ListBox.Item>
+                                {(categories?.items || []).map((cat) => (
+                                    <ListBox.Item key={cat.id} id={String(cat.id)} textValue={cat.name}>{cat.name}<ListBox.ItemIndicator /></ListBox.Item>
+                                ))}
+                            </ListBox>
+                        </Select.Popover>
+                    </Select>
                     <Button color="primary" className="cursor-pointer font-medium" onPress={handleOpenCreate}>
                         + Nuevo
                     </Button>
@@ -210,21 +220,29 @@ const ProductsPage = () => {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Categoría</label>
                                     <Controller
                                         name="category_id"
                                         control={control}
                                         render={({ field }) => (
-                                            <select
-                                                value={field.value}
-                                                onChange={(e) => field.onChange(Number(e.target.value))}
-                                                className={`cursor-pointer w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-900'}`}
+                                            <Select
+                                                className="w-full"
+                                                placeholder="Seleccionar..."
+                                                selectedKey={field.value ? String(field.value) : undefined}
+                                                onSelectionChange={(key) => field.onChange(Number(key))}
                                             >
-                                                <option value={0}>Seleccionar...</option>
-                                                {categories?.items.map((cat) => (
-                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                ))}
-                                            </select>
+                                                <Label>Categoría</Label>
+                                                <Select.Trigger>
+                                                    <Select.Value />
+                                                    <Select.Indicator />
+                                                </Select.Trigger>
+                                                <Select.Popover>
+                                                    <ListBox>
+                                                        {(categories?.items || []).map((cat) => (
+                                                            <ListBox.Item key={cat.id} id={String(cat.id)} textValue={cat.name}>{cat.name}<ListBox.ItemIndicator /></ListBox.Item>
+                                                        ))}
+                                                    </ListBox>
+                                                </Select.Popover>
+                                            </Select>
                                         )}
                                     />
                                     {errors.category_id && <p className="text-red-400 text-xs mt-1">{errors.category_id.message}</p>}
