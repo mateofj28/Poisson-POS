@@ -90,10 +90,10 @@ def seed():
 
         # === BARRELS ===
         barrels = [
-            Barrel(name="BBC Lager", capacity_liters=30, available_liters=30),
-            Barrel(name="Tres Cordilleras Mestiza", capacity_liters=30, available_liters=25),
-            Barrel(name="Bogotá Beer Chapinero", capacity_liters=50, available_liters=50),
-            Barrel(name="Apóstol Rubia", capacity_liters=30, available_liters=18),
+            Barrel(name="BBC Lager", capacity_liters=30, available_liters=30, shot_price=5000),
+            Barrel(name="Tres Cordilleras Mestiza", capacity_liters=30, available_liters=25, shot_price=6000),
+            Barrel(name="Bogotá Beer Chapinero", capacity_liters=50, available_liters=50, shot_price=7000),
+            Barrel(name="Apóstol Rubia", capacity_liters=30, available_liters=18, shot_price=5500),
         ]
         db.add_all(barrels)
         db.flush()
