@@ -58,6 +58,80 @@ const CashRegisterPage = () => {
         return <div className="flex justify-center items-center h-64"><Spinner size="lg" /></div>;
     }
 
+    const exportReport = (reg: any) => {
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        if (!printWindow) return;
+
+        const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reporte de Cierre - Poisson POS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; padding: 20px; max-width: 350px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 16px; border-bottom: 2px dashed #333; padding-bottom: 12px; }
+        .header h1 { font-size: 18px; margin-bottom: 4px; }
+        .header p { font-size: 11px; color: #666; }
+        .section { margin: 12px 0; padding: 8px 0; border-bottom: 1px dashed #ccc; }
+        .row { display: flex; justify-content: space-between; font-size: 12px; margin: 4px 0; }
+        .row .label { color: #666; }
+        .row .value { font-weight: bold; }
+        .total { font-size: 16px; font-weight: bold; text-align: center; margin: 16px 0; padding: 12px; border: 2px solid #333; }
+        .diff { text-align: center; margin: 8px 0; font-size: 14px; }
+        .diff.positive { color: green; }
+        .diff.negative { color: red; }
+        .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #999; border-top: 2px dashed #333; padding-top: 12px; }
+        @media print { body { padding: 10px; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐟 POISSON POS</h1>
+        <p>REPORTE DE CIERRE DE CAJA</p>
+        <p>${new Date(reg.opened_at).toLocaleDateString('es-CO')}</p>
+    </div>
+
+    <div class="section">
+        <div class="row"><span class="label">Empleado:</span><span class="value">${reg.employee_name || '-'}</span></div>
+        <div class="row"><span class="label">Apertura:</span><span class="value">${new Date(reg.opened_at).toLocaleString('es-CO')}</span></div>
+        <div class="row"><span class="label">Cierre:</span><span class="value">${reg.closed_at ? new Date(reg.closed_at).toLocaleString('es-CO') : '-'}</span></div>
+    </div>
+
+    <div class="section">
+        <div class="row"><span class="label">Monto apertura:</span><span class="value">$${reg.opening_amount.toLocaleString()}</span></div>
+        <div class="row"><span class="label">Ventas totales:</span><span class="value">$${reg.total_sales.toLocaleString()}</span></div>
+        <div class="row"><span class="label">Ventas efectivo:</span><span class="value">$${reg.total_cash_sales.toLocaleString()}</span></div>
+        <div class="row"><span class="label">Ventas digitales:</span><span class="value">$${reg.total_digital_sales.toLocaleString()}</span></div>
+    </div>
+
+    <div class="section">
+        <div class="row"><span class="label">Efectivo esperado:</span><span class="value">$${reg.expected_amount !== null ? reg.expected_amount.toLocaleString() : '-'}</span></div>
+        <div class="row"><span class="label">Efectivo contado:</span><span class="value">$${reg.closing_amount !== null ? reg.closing_amount.toLocaleString() : '-'}</span></div>
+    </div>
+
+    ${reg.difference !== null ? `
+    <div class="diff ${reg.difference >= 0 ? 'positive' : 'negative'}">
+        ${reg.difference >= 0 ? 'SOBRANTE' : 'FALTANTE'}: $${Math.abs(reg.difference).toLocaleString()}
+    </div>` : ''}
+
+    <div class="total">
+        TOTAL VENTAS: $${reg.total_sales.toLocaleString()}
+    </div>
+
+    <div class="footer">
+        <p>Poisson POS - Sistema de Punto de Venta</p>
+        <p>Generado: ${new Date().toLocaleString('es-CO')}</p>
+    </div>
+</body>
+</html>`;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 500);
+    };
+
     return (
         <div className="space-y-6">
             <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Caja Registradora</h1>
@@ -140,6 +214,7 @@ const CashRegisterPage = () => {
                             <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Diferencia</th>
                             <th className={`text-center px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Estado</th>
                             <th className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Fecha</th>
+                            <th className={`text-right px-4 py-3 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Reporte</th>
                         </tr>
                     </thead>
                     <tbody className={`divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
@@ -162,10 +237,21 @@ const CashRegisterPage = () => {
                                     </Chip>
                                 </td>
                                 <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(reg.opened_at).toLocaleString('es-CO')}</td>
+                                <td className="px-4 py-3 text-right">
+                                    {!reg.is_open && (
+                                        <button
+                                            onClick={() => exportReport(reg)}
+                                            className={`cursor-pointer w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark ? 'hover:bg-zinc-700 text-zinc-400 hover:text-white' : 'hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900'}`}
+                                            title="Exportar reporte"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                                        </button>
+                                    )}
+                                </td>
                             </tr>
                         ))}
                         {(!history?.items || history.items.length === 0) && (
-                            <tr><td colSpan={7} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>No hay registros</td></tr>
+                            <tr><td colSpan={8} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>No hay registros</td></tr>
                         )}
                     </tbody>
                 </table>
