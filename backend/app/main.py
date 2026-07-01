@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError
+from contextlib import asynccontextmanager
+import asyncio
+from datetime import datetime, timezone
 
 from app.core.config import settings
 from app.middleware.error_handler import (
@@ -20,6 +23,38 @@ from app.api.sales import router as sales_router
 from app.api.inventory import router as inventory_router
 from app.api.cash_register import router as cash_register_router
 from app.api.dashboard import router as dashboard_router
+from app.database.session import SessionLocal
+from app.models.barrel import Barrel
+
+
+async def reset_shots_daily():
+    """Background task that resets barrel shots at midnight."""
+    last_reset_date = datetime.now(timezone.utc).date()
+
+    while True:
+        await asyncio.sleep(60 * 30)  # Check every 30 minutes
+        current_date = datetime.now(timezone.utc).date()
+
+        if current_date > last_reset_date:
+            try:
+                db = SessionLocal()
+                db.query(Barrel).update({Barrel.shots_sold_today: 0})
+                db.commit()
+                db.close()
+                last_reset_date = current_date
+                print(f"[SCHEDULER] Shots reseteados - {current_date}")
+            except Exception as e:
+                print(f"[SCHEDULER] Error reseteando shots: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: launch background task
+    task = asyncio.create_task(reset_shots_daily())
+    yield
+    # Shutdown: cancel task
+    task.cancel()
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -27,6 +62,7 @@ app = FastAPI(
     description="Sistema POS para gestión de licoreras, bares y gastrobares",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # CORS
