@@ -43,12 +43,33 @@ const EmployeesPage = () => {
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState<Employee | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    // Debounce search to avoid re-renders on every keystroke
+    const searchTimeout = useState<ReturnType<typeof setTimeout> | null>(null);
+    const handleSearch = (value: string) => {
+        setSearch(value);
+        if (searchTimeout[0]) clearTimeout(searchTimeout[0]);
+        searchTimeout[0] = setTimeout(() => setDebouncedSearch(value), 300);
+    };
     const [deleteConfirm, setDeleteConfirm] = useState<Employee | null>(null);
 
     const { data, isLoading } = useQuery({
-        queryKey: ['employees', search],
-        queryFn: () => employeeService.getAll({ search: search || undefined, limit: 100 }),
+        queryKey: ['employees'],
+        queryFn: () => employeeService.getAll({ limit: 100 }),
     });
+
+    // Filter locally based on search
+    const filteredEmployees = data?.items.filter((emp) => {
+        if (!debouncedSearch) return true;
+        const q = debouncedSearch.toLowerCase();
+        return (
+            emp.first_name.toLowerCase().includes(q) ||
+            emp.last_name.toLowerCase().includes(q) ||
+            emp.document.includes(q) ||
+            emp.email.toLowerCase().includes(q)
+        );
+    }) || [];
 
     const { register, handleSubmit, reset, control, formState: { errors } } = useForm<EmployeeForm>({
         resolver: zodResolver(employeeSchema),
@@ -132,7 +153,7 @@ const EmployeesPage = () => {
                             type="text"
                             placeholder="Buscar..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => handleSearch(e.target.value)}
                             className={`pl-9 pr-4 py-2 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all w-48 ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
                         />
                     </div>
@@ -156,7 +177,7 @@ const EmployeesPage = () => {
                         </tr>
                     </thead>
                     <tbody className={`divide-y ${isDark ? 'divide-zinc-800' : 'divide-zinc-100'}`}>
-                        {data?.items.map((emp) => (
+                        {filteredEmployees.map((emp) => (
                             <tr key={emp.id} className={`transition-colors ${isDark ? 'hover:bg-zinc-800/50' : 'hover:bg-zinc-50'}`}>
                                 <td className={`px-4 py-3 text-sm font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>{emp.first_name} {emp.last_name}</td>
                                 <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{emp.document}</td>
@@ -187,8 +208,8 @@ const EmployeesPage = () => {
                                 </td>
                             </tr>
                         ))}
-                        {(!data?.items || data.items.length === 0) && (
-                            <tr><td colSpan={6} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>No hay empleados</td></tr>
+                        {filteredEmployees.length === 0 && (
+                            <tr><td colSpan={6} className={`px-4 py-12 text-center text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>{debouncedSearch ? 'No se encontraron resultados' : 'No hay empleados'}</td></tr>
                         )}
                     </tbody>
                 </table>
