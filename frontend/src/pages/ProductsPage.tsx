@@ -11,11 +11,11 @@ import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
 const productSchema = z.object({
-    name: z.string().min(2, 'Mínimo 2 caracteres'),
+    name: z.string().min(2, 'Mínimo 2 caracteres').max(150, 'Máximo 150 caracteres'),
     category_id: z.number().min(1, 'Seleccione una categoría'),
-    sale_price: z.number().min(0.01, 'Debe ser mayor a 0'),
-    stock: z.number().min(0).optional(),
-    min_stock: z.number().min(0).optional(),
+    sale_price: z.number().min(100, 'El precio debe ser al menos $100'),
+    stock: z.number().min(0, 'No puede ser negativo').optional(),
+    min_stock: z.number().min(0, 'No puede ser negativo').optional(),
 });
 
 type ProductForm = z.infer<typeof productSchema>;

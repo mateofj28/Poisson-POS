@@ -10,11 +10,11 @@ import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
 const employeeSchema = z.object({
-    first_name: z.string().min(2, 'Mínimo 2 caracteres'),
-    last_name: z.string().min(2, 'Mínimo 2 caracteres'),
-    document: z.string().min(5, 'Mínimo 5 caracteres'),
-    phone: z.string().optional(),
-    email: z.string().email('Email inválido'),
+    first_name: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
+    last_name: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
+    document: z.string().min(6, 'Mínimo 6 dígitos').max(10, 'Máximo 10 dígitos').regex(/^\d+$/, 'Solo números'),
+    phone: z.string().length(10, 'Debe tener 10 dígitos').regex(/^\d+$/, 'Solo números').optional().or(z.literal('')),
+    email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres'),
     role: z.nativeEnum(RoleEnum),
     password: z.string().min(6, 'Mínimo 6 caracteres').optional().or(z.literal('')),
 });

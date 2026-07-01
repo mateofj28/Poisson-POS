@@ -12,6 +12,7 @@ import OrdersPage from '../pages/OrdersPage';
 import SalesPage from '../pages/SalesPage';
 import InventoryPage from '../pages/InventoryPage';
 import CashRegisterPage from '../pages/CashRegisterPage';
+import NotFoundPage from '../pages/NotFoundPage';
 
 const router = createBrowserRouter([
     {
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
                 ],
             },
         ],
+    },
+    {
+        path: '*',
+        element: <NotFoundPage />,
     },
 ]);
 
