@@ -86,10 +86,12 @@ const OrdersPage = () => {
     const [orderItems, setOrderItems] = useState<OrderItemCreate[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<number>(0);
     const [notes, setNotes] = useState('');
+    const [page, setPage] = useState(1);
+    const pageSize = 20;
 
     const { data, isLoading } = useQuery({
-        queryKey: ['orders', statusFilter],
-        queryFn: () => orderService.getAll({ limit: 50, status: statusFilter || undefined }),
+        queryKey: ['orders', statusFilter, page],
+        queryFn: () => orderService.getAll({ skip: (page - 1) * pageSize, limit: pageSize, status: statusFilter || undefined }),
     });
 
     const { data: tables } = useQuery({
@@ -222,6 +224,33 @@ const OrdersPage = () => {
                         )}
                     </tbody>
                 </table>
+                {/* Pagination */}
+                {data && data.pages > 1 && (
+                    <div className={`flex items-center justify-between px-4 py-3 border-t ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                        <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                            Mostrando {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, data.total)} de {data.total}
+                        </p>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page <= 1}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}
+                            >
+                                ← Anterior
+                            </button>
+                            <span className={`px-3 py-1.5 text-xs font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                                {page} / {data.pages}
+                            </span>
+                            <button
+                                onClick={() => setPage(p => Math.min(data.pages, p + 1))}
+                                disabled={page >= data.pages}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isDark ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}
+                            >
+                                Siguiente →
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Drawer - Nuevo Pedido */}
