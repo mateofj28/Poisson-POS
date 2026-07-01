@@ -28,11 +28,11 @@ const roleLabels: Record<RoleEnum, string> = {
     [RoleEnum.BARTENDER]: 'Bartender',
 };
 
-const roleColor: Record<RoleEnum, 'primary' | 'success' | 'warning' | 'secondary'> = {
-    [RoleEnum.ADMIN]: 'primary',
-    [RoleEnum.CAJERO]: 'success',
-    [RoleEnum.MESERO]: 'warning',
-    [RoleEnum.BARTENDER]: 'secondary',
+const roleColor: Record<RoleEnum, string> = {
+    [RoleEnum.ADMIN]: 'bg-blue-500 text-white',
+    [RoleEnum.CAJERO]: 'bg-emerald-500 text-white',
+    [RoleEnum.MESERO]: 'bg-amber-500 text-white',
+    [RoleEnum.BARTENDER]: 'bg-purple-500 text-white',
 };
 
 const EmployeesPage = () => {
@@ -161,7 +161,7 @@ const EmployeesPage = () => {
                                 <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{emp.document}</td>
                                 <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{emp.email}</td>
                                 <td className="px-4 py-3 text-center">
-                                    <Chip size="sm" variant="flat" color={roleColor[emp.role]}>{roleLabels[emp.role]}</Chip>
+                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${roleColor[emp.role]}`}>{roleLabels[emp.role]}</span>
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                     <Chip size="sm" variant="flat" color={emp.is_active ? 'success' : 'default'}>
