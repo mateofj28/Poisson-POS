@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Chip, Spinner } from '@heroui/react';
+import { Button, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,6 +42,7 @@ const EmployeesPage = () => {
     const [search, setSearch] = useState('');
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState<Employee | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<Employee | null>(null);
 
     const { data, isLoading } = useQuery({
@@ -238,21 +239,45 @@ const EmployeesPage = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Documento</label>
-                                    <input
-                                        type="text"
-                                        {...register('document')}
-                                        placeholder="Número de documento"
-                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    <Controller
+                                        name="document"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={field.value}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                                                    field.onChange(val);
+                                                }}
+                                                placeholder="6 a 10 dígitos"
+                                                maxLength={10}
+                                                className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                            />
+                                        )}
                                     />
                                     {errors.document && <p className="text-red-400 text-xs mt-1">{errors.document.message}</p>}
                                 </div>
                                 <div>
                                     <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Teléfono</label>
-                                    <input
-                                        type="text"
-                                        {...register('phone')}
-                                        placeholder="Teléfono"
-                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    <Controller
+                                        name="phone"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={field.value || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                                                    field.onChange(val);
+                                                }}
+                                                placeholder="10 dígitos"
+                                                maxLength={10}
+                                                className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                            />
+                                        )}
                                     />
                                 </div>
                             </div>
@@ -269,20 +294,32 @@ const EmployeesPage = () => {
                                     {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
                                 </div>
                                 <div>
-                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Rol</label>
                                     <Controller
                                         name="role"
                                         control={control}
                                         render={({ field }) => (
-                                            <select
-                                                value={field.value}
-                                                onChange={(e) => field.onChange(e.target.value)}
-                                                className={`cursor-pointer w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-900'}`}
+                                            <Select
+                                                className="w-full"
+                                                placeholder="Seleccionar rol..."
+                                                selectedKey={field.value}
+                                                onSelectionChange={(key) => field.onChange(key)}
                                             >
-                                                {Object.values(RoleEnum).map((r) => (
-                                                    <option key={r} value={r}>{roleLabels[r]}</option>
-                                                ))}
-                                            </select>
+                                                <Label>Rol</Label>
+                                                <Select.Trigger>
+                                                    <Select.Value />
+                                                    <Select.Indicator />
+                                                </Select.Trigger>
+                                                <Select.Popover>
+                                                    <ListBox>
+                                                        {Object.values(RoleEnum).map((r) => (
+                                                            <ListBox.Item key={r} id={r} textValue={roleLabels[r]}>
+                                                                {roleLabels[r]}
+                                                                <ListBox.ItemIndicator />
+                                                            </ListBox.Item>
+                                                        ))}
+                                                    </ListBox>
+                                                </Select.Popover>
+                                            </Select>
                                         )}
                                     />
                                 </div>
@@ -292,12 +329,25 @@ const EmployeesPage = () => {
                                 <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
                                     {editing ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña'}
                                 </label>
-                                <input
-                                    type="password"
-                                    {...register('password')}
-                                    placeholder="••••••••"
-                                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        {...register('password')}
+                                        placeholder="Mínimo 6 caracteres"
+                                        className={`w-full px-4 py-3 pr-12 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+                                    >
+                                        {showPassword ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                        )}
+                                    </button>
+                                </div>
                                 {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
                             </div>
 
