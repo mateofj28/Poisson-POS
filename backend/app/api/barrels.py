@@ -8,7 +8,7 @@ from app.schemas.barrel import (
     BarrelUpdate,
     BarrelResponse,
     BarrelListResponse,
-    BarrelDiscountRequest,
+    BarrelShotRequest,
 )
 from app.services.barrel_service import BarrelService
 from app.auth.dependencies import get_current_employee, require_roles
@@ -58,17 +58,27 @@ def update_barrel(
     return service.update_barrel(barrel_id, data)
 
 
-@router.post("/{barrel_id}/discount", response_model=BarrelResponse)
-def discount_liters(
+@router.post("/{barrel_id}/shot", response_model=BarrelResponse)
+def add_shot(
     barrel_id: int,
-    data: BarrelDiscountRequest,
+    data: BarrelShotRequest = BarrelShotRequest(),
     db: Session = Depends(get_db),
     current_employee: Employee = Depends(
-        require_roles(RoleEnum.ADMIN, RoleEnum.BARTENDER)
+        require_roles(RoleEnum.ADMIN, RoleEnum.BARTENDER, RoleEnum.CAJERO)
     ),
 ):
     service = BarrelService(db)
-    return service.discount_liters(barrel_id, data.liters)
+    return service.add_shot(barrel_id, data.shots)
+
+
+@router.post("/{barrel_id}/reset", response_model=BarrelResponse)
+def reset_shots(
+    barrel_id: int,
+    db: Session = Depends(get_db),
+    current_employee: Employee = Depends(require_roles(RoleEnum.ADMIN)),
+):
+    service = BarrelService(db)
+    return service.reset_shots(barrel_id)
 
 
 @router.delete("/{barrel_id}")

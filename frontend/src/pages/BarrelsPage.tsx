@@ -1,68 +1,60 @@
 import { useState } from 'react';
 import { Button, Chip, Spinner, Card, CardContent } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { barrelService } from '../services/barrel.service';
 import { Barrel } from '../types';
 import { useThemeStore } from '../store/theme.store';
 import toast from 'react-hot-toast';
 
-const barrelSchema = z.object({
-    name: z.string().min(2, 'Mínimo 2 caracteres'),
-    capacity_liters: z.number().min(0.1, 'Debe ser mayor a 0'),
-    available_liters: z.number().min(0, 'No puede ser negativo'),
-});
-
-type BarrelForm = z.infer<typeof barrelSchema>;
-
 const BarrelsPage = () => {
     const queryClient = useQueryClient();
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
-    const [openForm, setOpenForm] = useState(false);
-    const [editing, setEditing] = useState<Barrel | null>(null);
-    const [discountDialog, setDiscountDialog] = useState<Barrel | null>(null);
-    const [discountLiters, setDiscountLiters] = useState('');
-    const [deleteConfirm, setDeleteConfirm] = useState<Barrel | null>(null);
+    const [createDialog, setCreateDialog] = useState(false);
+    const [editDialog, setEditDialog] = useState<Barrel | null>(null);
+    const [name, setName] = useState('');
+    const [shotPrice, setShotPrice] = useState('');
 
     const { data, isLoading } = useQuery({
         queryKey: ['barrels'],
         queryFn: () => barrelService.getAll(),
     });
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<BarrelForm>({
-        resolver: zodResolver(barrelSchema),
-    });
-
     const createMutation = useMutation({
-        mutationFn: (data: BarrelForm) => barrelService.create(data),
+        mutationFn: () => barrelService.create({ name, shot_price: Number(shotPrice) }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['barrels'] });
-            toast.success('Barril creado');
-            handleCloseForm();
+            toast.success('Botella registrada');
+            setCreateDialog(false);
+            setName('');
+            setShotPrice('');
         },
         onError: (err: any) => toast.error(err.response?.data?.detail || 'Error'),
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }: { id: number; data: BarrelForm }) => barrelService.update(id, data),
+        mutationFn: () => barrelService.update(editDialog!.id, { name: name || undefined, shot_price: Number(shotPrice) || undefined }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['barrels'] });
-            toast.success('Barril actualizado');
-            handleCloseForm();
+            toast.success('Actualizado');
+            setEditDialog(null);
+            setName('');
+            setShotPrice('');
         },
         onError: (err: any) => toast.error(err.response?.data?.detail || 'Error'),
     });
 
-    const discountMutation = useMutation({
-        mutationFn: ({ id, liters }: { id: number; liters: number }) => barrelService.discount(id, { liters }),
+    const shotMutation = useMutation({
+        mutationFn: (id: number) => barrelService.addShot(id, 1),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['barrels'] }),
+        onError: (err: any) => toast.error(err.response?.data?.detail || 'Error'),
+    });
+
+    const resetMutation = useMutation({
+        mutationFn: (id: number) => barrelService.resetShots(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['barrels'] });
-            toast.success('Descuento aplicado');
-            setDiscountDialog(null);
-            setDiscountLiters('');
+            toast.success('Conteo reiniciado');
         },
         onError: (err: any) => toast.error(err.response?.data?.detail || 'Error'),
     });
@@ -71,251 +63,164 @@ const BarrelsPage = () => {
         mutationFn: (id: number) => barrelService.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['barrels'] });
-            toast.success('Barril eliminado');
-            setDeleteConfirm(null);
+            toast.success('Eliminado');
         },
         onError: (err: any) => toast.error(err.response?.data?.detail || 'Error'),
     });
 
-    const handleOpenCreate = () => {
-        setEditing(null);
-        reset({ name: '', capacity_liters: 0, available_liters: 0 });
-        setOpenForm(true);
-    };
-
     const handleOpenEdit = (barrel: Barrel) => {
-        setEditing(barrel);
-        reset({ name: barrel.name, capacity_liters: barrel.capacity_liters, available_liters: barrel.available_liters });
-        setOpenForm(true);
-    };
-
-    const handleCloseForm = () => {
-        setOpenForm(false);
-        setEditing(null);
-    };
-
-    const onSubmit = (formData: BarrelForm) => {
-        if (editing) {
-            updateMutation.mutate({ id: editing.id, data: formData });
-        } else {
-            createMutation.mutate(formData);
-        }
-    };
-
-    const getBarrelColor = (percentage: number) => {
-        if (percentage > 50) return 'bg-emerald-500';
-        if (percentage > 20) return 'bg-amber-500';
-        return 'bg-red-500';
-    };
-
-    const getBarrelTextColor = (percentage: number) => {
-        if (percentage > 50) return 'text-emerald-400';
-        if (percentage > 20) return 'text-amber-400';
-        return 'text-red-400';
+        setEditDialog(barrel);
+        setName(barrel.name);
+        setShotPrice(String(barrel.shot_price));
     };
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-64"><Spinner size="lg" /></div>;
     }
 
+    const totalRevenue = data?.items.reduce((acc, b) => acc + b.revenue_today, 0) || 0;
+    const totalShots = data?.items.reduce((acc, b) => acc + b.shots_sold_today, 0) || 0;
+
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Barriles</h1>
-                <Button color="primary" className="cursor-pointer font-medium" onPress={handleOpenCreate}>
-                    + Nuevo
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Shots del Día</h1>
+                    <p className={`text-sm mt-0.5 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                        {totalShots} shots vendidos · ${totalRevenue.toLocaleString()} recaudado
+                    </p>
+                </div>
+                <Button color="primary" className="cursor-pointer" onPress={() => setCreateDialog(true)}>
+                    + Nueva Botella
                 </Button>
             </div>
 
-            {/* Barrel Cards Grid */}
+            {/* Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {data?.items.map((barrel) => (
                     <Card key={barrel.id} className={`border-none shadow-none ${isDark ? 'bg-[#18181b]' : 'bg-[#f4f4f5]'}`}>
                         <CardContent className="p-5">
                             {/* Header */}
-                            <div className="flex justify-between items-center mb-4">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xl">🍺</span>
-                                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>{barrel.name}</span>
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <p className={`text-base font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>{barrel.name}</p>
+                                    <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>${barrel.shot_price.toLocaleString()} / shot</p>
                                 </div>
-                                <Chip size="sm" variant="flat" color={barrel.is_empty ? 'danger' : 'success'}>
-                                    {barrel.is_empty ? 'Vacío' : 'Activo'}
+                                <Chip color={barrel.is_active ? 'success' : 'default'} size="sm" variant="flat">
+                                    {barrel.is_active ? 'Activa' : 'Inactiva'}
                                 </Chip>
                             </div>
 
-                            {/* Progress */}
-                            <div className="mb-4">
-                                <div className="flex justify-between mb-1.5">
-                                    <span className={`text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                                        {barrel.available_liters.toFixed(1)}L / {barrel.capacity_liters.toLocaleString()}L
-                                    </span>
-                                    <span className={`text-xs font-semibold ${getBarrelTextColor(barrel.percentage_remaining)}`}>
-                                        {barrel.percentage_remaining.toFixed(0)}%
-                                    </span>
+                            {/* Stats */}
+                            <div className="flex items-end justify-between mb-4">
+                                <div>
+                                    <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>{barrel.shots_sold_today}</p>
+                                    <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>shots hoy</p>
                                 </div>
-                                <div className={`w-full h-3 rounded-full overflow-hidden ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
-                                    <div
-                                        className={`h-full rounded-full transition-all ${getBarrelColor(barrel.percentage_remaining)}`}
-                                        style={{ width: `${Math.min(barrel.percentage_remaining, 100)}%` }}
-                                    />
+                                <div className="text-right">
+                                    <p className="text-xl font-bold text-emerald-400">${barrel.revenue_today.toLocaleString()}</p>
+                                    <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>recaudado</p>
                                 </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex justify-between items-center">
+                            <div className="flex gap-2">
                                 <Button
+                                    color="primary"
                                     size="sm"
-                                    variant="flat"
-                                    className="cursor-pointer"
-                                    isDisabled={barrel.is_empty}
-                                    onPress={() => setDiscountDialog(barrel)}
+                                    className="flex-1 cursor-pointer font-semibold"
+                                    onPress={() => shotMutation.mutate(barrel.id)}
+                                    isDisabled={!barrel.is_active}
                                 >
-                                    🍺 Descontar
+                                    +1 Shot 🥃
                                 </Button>
-                                <div className="flex gap-1">
-                                    <button
-                                        onClick={() => handleOpenEdit(barrel)}
-                                        className={`cursor-pointer p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-zinc-700 text-zinc-400 hover:text-white' : 'hover:bg-zinc-200 text-zinc-500 hover:text-zinc-900'}`}
-                                    >
-                                        ✏️
-                                    </button>
-                                    <button
-                                        onClick={() => setDeleteConfirm(barrel)}
-                                        className="cursor-pointer p-1.5 rounded-lg transition-colors hover:bg-red-500/10 text-red-400"
-                                    >
-                                        🗑️
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => handleOpenEdit(barrel)}
+                                    className={`w-9 h-9 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${isDark ? 'hover:bg-zinc-700 text-zinc-400' : 'hover:bg-zinc-200 text-zinc-500'}`}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                                </button>
+                                <button
+                                    onClick={() => resetMutation.mutate(barrel.id)}
+                                    className={`w-9 h-9 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${isDark ? 'hover:bg-zinc-700 text-zinc-400' : 'hover:bg-zinc-200 text-zinc-500'}`}
+                                    title="Reiniciar conteo"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                                </button>
+                                <button
+                                    onClick={() => deleteMutation.mutate(barrel.id)}
+                                    className="w-9 h-9 rounded-lg flex items-center justify-center cursor-pointer transition-colors hover:bg-red-500/10 text-red-400"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                                </button>
                             </div>
                         </CardContent>
                     </Card>
                 ))}
-                {(!data?.items || data.items.length === 0) && (
-                    <div className={`col-span-full text-center py-12 text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                        No hay barriles registrados
-                    </div>
-                )}
             </div>
 
-            {/* Create/Edit Modal */}
-            {openForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={handleCloseForm}>
+            {/* Create Modal */}
+            {createDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setCreateDialog(false)}>
                     <div className={`rounded-3xl border w-full max-w-md mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
-                        <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-5">
-                            <span className="text-2xl">{editing ? '✏️' : '🍺'}</span>
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-11 h-11 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
+                                <span className="text-lg">🍾</span>
+                            </div>
+                            <div>
+                                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Nueva Botella</h2>
+                                <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Registra una nueva botella o barril</p>
+                            </div>
                         </div>
-                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                            {editing ? 'Editar Barril' : 'Nuevo Barril'}
-                        </h2>
-                        <p className={`text-sm text-center mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                            {editing ? 'Modifica los datos del barril' : 'Registra un nuevo barril'}
-                        </p>
 
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <div className="space-y-4">
                             <div>
                                 <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Nombre</label>
-                                <input
-                                    type="text"
-                                    {...register('name')}
-                                    placeholder="Nombre del barril"
-                                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
-                                />
-                                {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+                                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Buchanan's 12 años" className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`} />
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Capacidad (L)</label>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        {...register('capacity_liters', { valueAsNumber: true })}
-                                        placeholder="0"
-                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
-                                    />
-                                    {errors.capacity_liters && <p className="text-red-400 text-xs mt-1">{errors.capacity_liters.message}</p>}
-                                </div>
-                                <div>
-                                    <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Disponibles (L)</label>
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        {...register('available_liters', { valueAsNumber: true })}
-                                        placeholder="0"
-                                        className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
-                                    />
-                                    {errors.available_liters && <p className="text-red-400 text-xs mt-1">{errors.available_liters.message}</p>}
-                                </div>
+                            <div>
+                                <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Precio por shot</label>
+                                <input type="text" inputMode="numeric" value={shotPrice ? Number(shotPrice).toLocaleString() : ''} onChange={(e) => setShotPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="Ej: 12.500" className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`} />
                             </div>
-
-                            <div className="flex gap-3 pt-2">
-                                <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={handleCloseForm}>Cancelar</Button>
-                                <Button size="lg" color="primary" className="flex-1 cursor-pointer font-semibold" type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>
-                                    {editing ? 'Actualizar' : 'Crear'}
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Discount Modal */}
-            {discountDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setDiscountDialog(null)}>
-                    <div className={`rounded-3xl border w-full max-w-sm mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
-                        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto mb-5">
-                            <span className="text-2xl">🍺</span>
                         </div>
-                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Descontar Litros</h2>
-                        <p className={`text-sm text-center mb-2 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{discountDialog.name}</p>
-                        <p className={`text-xs text-center mb-6 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                            Disponible: {discountDialog.available_liters.toFixed(1)}L
-                        </p>
 
-                        <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Litros a descontar</label>
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            value={discountLiters}
-                            onChange={(e) => setDiscountLiters(e.target.value.replace(/[^0-9.]/g, ''))}
-                            placeholder="0"
-                            className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`}
-                        />
-
-                        <div className="flex gap-3 mt-6">
-                            <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={() => setDiscountDialog(null)}>Cancelar</Button>
-                            <Button
-                                size="lg"
-                                color="warning"
-                                className="flex-1 cursor-pointer font-semibold"
-                                isLoading={discountMutation.isPending}
-                                isDisabled={!discountLiters || Number(discountLiters) <= 0}
-                                onPress={() => discountMutation.mutate({ id: discountDialog.id, liters: Number(discountLiters) })}
-                            >
-                                Descontar
-                            </Button>
+                        <div className="flex gap-3 mt-8">
+                            <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={() => setCreateDialog(false)}>Cancelar</Button>
+                            <Button size="lg" color="primary" className="flex-1 cursor-pointer font-semibold" isDisabled={!name || !shotPrice} isLoading={createMutation.isPending} onPress={() => createMutation.mutate()}>Crear</Button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Delete Confirm Modal */}
-            {deleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setDeleteConfirm(null)}>
-                    <div className={`rounded-3xl border w-full max-w-sm mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
-                        <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-5">
-                            <span className="text-2xl">🗑️</span>
+            {/* Edit Modal */}
+            {editDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={() => setEditDialog(null)}>
+                    <div className={`rounded-3xl border w-full max-w-md mx-4 p-8 shadow-2xl ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-11 h-11 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-blue-400"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                            </div>
+                            <div>
+                                <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Editar Botella</h2>
+                                <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>{editDialog.name}</p>
+                            </div>
                         </div>
-                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>Eliminar Barril</h2>
-                        <p className={`text-sm text-center mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                            ¿Está seguro de eliminar <span className="font-semibold">{deleteConfirm.name}</span>?
-                        </p>
-                        <div className="flex gap-3">
-                            <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={() => setDeleteConfirm(null)}>Cancelar</Button>
-                            <Button size="lg" color="danger" className="flex-1 cursor-pointer font-semibold" isLoading={deleteMutation.isPending} onPress={() => deleteMutation.mutate(deleteConfirm.id)}>
-                                Eliminar
-                            </Button>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Nombre</label>
+                                <input value={name} onChange={(e) => setName(e.target.value)} className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`} />
+                            </div>
+                            <div>
+                                <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Precio por shot</label>
+                                <input type="text" inputMode="numeric" value={shotPrice ? Number(shotPrice).toLocaleString() : ''} onChange={(e) => setShotPrice(e.target.value.replace(/[^0-9]/g, ''))} className={`w-full px-4 py-3 rounded-xl border text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${isDark ? 'bg-zinc-800/60 border-zinc-700 text-white placeholder-zinc-500' : 'bg-zinc-100 border-zinc-300 text-zinc-900 placeholder-zinc-400'}`} />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-8">
+                            <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={() => setEditDialog(null)}>Cancelar</Button>
+                            <Button size="lg" color="primary" className="flex-1 cursor-pointer font-semibold" isLoading={updateMutation.isPending} onPress={() => updateMutation.mutate()}>Actualizar</Button>
                         </div>
                     </div>
                 </div>

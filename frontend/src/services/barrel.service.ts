@@ -1,5 +1,5 @@
 import api from './api';
-import { Barrel, BarrelCreate, BarrelUpdate, BarrelListResponse, BarrelDiscountRequest } from '../types';
+import { Barrel, BarrelCreate, BarrelUpdate, BarrelListResponse, BarrelShotRequest } from '../types';
 
 export const barrelService = {
     getAll: async (is_active?: boolean): Promise<BarrelListResponse> => {
@@ -23,8 +23,13 @@ export const barrelService = {
         return response.data;
     },
 
-    discount: async (id: number, data: BarrelDiscountRequest): Promise<Barrel> => {
-        const response = await api.post<Barrel>(`/barrels/${id}/discount`, data);
+    addShot: async (id: number, shots: number = 1): Promise<Barrel> => {
+        const response = await api.post<Barrel>(`/barrels/${id}/shot`, { shots });
+        return response.data;
+    },
+
+    resetShots: async (id: number): Promise<Barrel> => {
+        const response = await api.post<Barrel>(`/barrels/${id}/reset`);
         return response.data;
     },
 

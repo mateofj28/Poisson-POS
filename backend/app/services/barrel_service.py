@@ -25,16 +25,12 @@ class BarrelService:
         return {"items": barrels, "total": total}
 
     def create_barrel(self, data: BarrelCreate) -> Barrel:
-        if data.available_liters > data.capacity_liters:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Los litros disponibles no pueden superar la capacidad",
-            )
-
         barrel = Barrel(
             name=data.name,
-            capacity_liters=data.capacity_liters,
-            available_liters=data.available_liters,
+            shot_price=data.shot_price,
+            shots_sold_today=0,
+            capacity_liters=0,
+            available_liters=0,
         )
         return self.repository.create(barrel)
 
@@ -47,22 +43,33 @@ class BarrelService:
 
         return self.repository.update(barrel)
 
-    def discount_liters(self, barrel_id: int, liters: float) -> Barrel:
+    def add_shot(self, barrel_id: int, shots: int = 1) -> Barrel:
         barrel = self.get_barrel(barrel_id)
 
-        if barrel.available_liters < liters:
+        if not barrel.is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No hay suficientes litros disponibles. Disponible: {barrel.available_liters}L",
+                detail="Este barril no está activo",
             )
 
-        barrel.available_liters -= liters
-
-        if barrel.available_liters <= 0:
-            barrel.available_liters = 0
-            barrel.is_active = False
-
+        barrel.shots_sold_today += shots
         return self.repository.update(barrel)
+
+    def reset_shots(self, barrel_id: int) -> Barrel:
+        barrel = self.get_barrel(barrel_id)
+        barrel.shots_sold_today = 0
+        return self.repository.update(barrel)
+
+    def reset_all_shots(self):
+        """Reset all barrel shot counts (for daily reset)"""
+        barrels, _ = self.repository.get_all()
+        for barrel in barrels:
+            barrel.shots_sold_today = 0
+        self.repository.db.commit()
+
+    def discount_liters(self, barrel_id: int, liters: float) -> Barrel:
+        """Legacy method - now just adds a shot"""
+        return self.add_shot(barrel_id, 1)
 
     def delete_barrel(self, barrel_id: int) -> Barrel:
         barrel = self.get_barrel(barrel_id)

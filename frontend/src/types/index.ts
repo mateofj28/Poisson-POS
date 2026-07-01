@@ -206,25 +206,22 @@ export interface ProductListResponse {
 export interface Barrel {
     id: number;
     name: string;
-    capacity_liters: number;
-    available_liters: number;
+    shot_price: number;
+    shots_sold_today: number;
+    revenue_today: number;
     is_active: boolean;
-    percentage_remaining: number;
-    is_empty: boolean;
     created_at: string;
     updated_at: string;
 }
 
 export interface BarrelCreate {
     name: string;
-    capacity_liters: number;
-    available_liters: number;
+    shot_price: number;
 }
 
 export interface BarrelUpdate {
     name?: string;
-    capacity_liters?: number;
-    available_liters?: number;
+    shot_price?: number;
     is_active?: boolean;
 }
 
@@ -233,8 +230,8 @@ export interface BarrelListResponse {
     total: number;
 }
 
-export interface BarrelDiscountRequest {
-    liters: number;
+export interface BarrelShotRequest {
+    shots: number;
 }
 
 // Order

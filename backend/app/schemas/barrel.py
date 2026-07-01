@@ -3,30 +3,32 @@ from typing import Optional
 from datetime import datetime
 
 
-class BarrelBase(BaseModel):
+class BarrelCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=150)
-    capacity_liters: float = Field(..., gt=0)
-    available_liters: float = Field(..., ge=0)
-
-
-class BarrelCreate(BarrelBase):
-    pass
+    shot_price: float = Field(..., gt=0)
 
 
 class BarrelUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=150)
-    capacity_liters: Optional[float] = Field(None, gt=0)
-    available_liters: Optional[float] = Field(None, ge=0)
+    shot_price: Optional[float] = Field(None, gt=0)
     is_active: Optional[bool] = None
 
 
-class BarrelResponse(BarrelBase):
+class BarrelResponse(BaseModel):
     id: int
+    name: str
+    shot_price: float
+    shots_sold_today: int
+    revenue_today: float
     is_active: bool
-    percentage_remaining: float
-    is_empty: bool
     created_at: datetime
     updated_at: datetime
+
+    # Legacy fields for compatibility
+    capacity_liters: Optional[float] = 0
+    available_liters: Optional[float] = 0
+    percentage_remaining: float = 0
+    is_empty: bool = False
 
     class Config:
         from_attributes = True
@@ -37,5 +39,5 @@ class BarrelListResponse(BaseModel):
     total: int
 
 
-class BarrelDiscountRequest(BaseModel):
-    liters: float = Field(..., gt=0)
+class BarrelShotRequest(BaseModel):
+    shots: int = Field(1, gt=0)
