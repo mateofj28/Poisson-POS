@@ -48,3 +48,12 @@ html.light body {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(113, 113, 122, 0.6);
 }
+/* Hide scrollbar but keep scroll */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
