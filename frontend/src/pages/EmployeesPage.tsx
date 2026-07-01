@@ -198,23 +198,26 @@ const EmployeesPage = () => {
             {openForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md" onClick={handleCloseForm}>
                     <div className={`rounded-3xl border w-full max-w-lg mx-4 shadow-2xl max-h-[85vh] flex flex-col overflow-hidden ${isDark ? 'bg-[#18181b] border-zinc-800' : 'bg-white border-zinc-200'}`} onClick={(e) => e.stopPropagation()}>
-                        {/* Scrollable content */}
-                        <div className="overflow-y-auto p-8 scrollbar-thin scrollbar-thumb-zinc-600 scrollbar-track-transparent">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-5">
-                            {editing ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-blue-400"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
-                            ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-blue-400"><path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" /></svg>
-                            )}
+                        {/* Fixed Header */}
+                        <div className={`px-8 pt-8 pb-4 text-center shrink-0 border-b ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                            <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-4">
+                                {editing ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-blue-400"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-blue-400"><path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" /></svg>
+                                )}
+                            </div>
+                            <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                                {editing ? 'Editar Empleado' : 'Nuevo Empleado'}
+                            </h2>
+                            <p className={`text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                {editing ? 'Modifica los datos del empleado' : 'Registra un nuevo empleado'}
+                            </p>
                         </div>
-                        <h2 className={`text-xl font-bold text-center mb-1 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                            {editing ? 'Editar Empleado' : 'Nuevo Empleado'}
-                        </h2>
-                        <p className={`text-sm text-center mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                            {editing ? 'Modifica los datos del empleado' : 'Registra un nuevo empleado'}
-                        </p>
 
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        {/* Scrollable Body */}
+                        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="flex-1 overflow-y-auto px-8 py-5 space-y-4 scrollbar-thin">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>Nombre</label>
@@ -353,14 +356,16 @@ const EmployeesPage = () => {
                                 {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
                             </div>
 
-                            <div className="flex gap-3 pt-2">
+                            </div>
+
+                            {/* Fixed Footer */}
+                            <div className={`px-8 py-4 border-t shrink-0 flex gap-3 ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
                                 <Button size="lg" variant="flat" className="flex-1 cursor-pointer" onPress={handleCloseForm}>Cancelar</Button>
                                 <Button size="lg" color="primary" className="flex-1 cursor-pointer font-semibold" type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>
                                     {editing ? 'Actualizar' : 'Crear'}
                                 </Button>
                             </div>
                         </form>
-                    </div>
                     </div>
                 </div>
             )}
