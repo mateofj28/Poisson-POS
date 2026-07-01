@@ -59,15 +59,17 @@ const EmployeesPage = () => {
         queryFn: () => employeeService.getAll({ limit: 100 }),
     });
 
-    // Filter locally based on search
+    // Filter locally based on search (accent-insensitive)
+    const removeAccents = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
     const filteredEmployees = data?.items.filter((emp) => {
         if (!debouncedSearch) return true;
-        const q = debouncedSearch.toLowerCase();
+        const q = removeAccents(debouncedSearch.toLowerCase());
         return (
-            emp.first_name.toLowerCase().includes(q) ||
-            emp.last_name.toLowerCase().includes(q) ||
+            removeAccents(emp.first_name.toLowerCase()).includes(q) ||
+            removeAccents(emp.last_name.toLowerCase()).includes(q) ||
             emp.document.includes(q) ||
-            emp.email.toLowerCase().includes(q)
+            removeAccents(emp.email.toLowerCase()).includes(q)
         );
     }) || [];
 
