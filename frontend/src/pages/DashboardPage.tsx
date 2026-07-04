@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, Chip, Spinner } from '@heroui/react';
 import { dashboardService } from '../services/dashboard.service';
+import { inventoryService } from '../services/inventory.service';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeStore } from '../store/theme.store';
 import CardSkeleton from '../components/CardSkeleton';
@@ -14,6 +15,12 @@ const DashboardPage = () => {
         queryKey: ['dashboard'],
         queryFn: dashboardService.getDashboard,
         refetchInterval: 30000,
+    });
+
+    const { data: lowStockProducts } = useQuery({
+        queryKey: ['low-stock-dashboard'],
+        queryFn: () => inventoryService.getLowStock(),
+        refetchInterval: 60000,
     });
 
     if (isLoading) {
@@ -99,28 +106,38 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Card className={`${cardBg} border-none shadow-none`}>
                     <CardContent className="p-5">
-                        <div className="flex items-center justify-between mb-5">
-                            <p className={`text-sm font-medium ${textPrimary}`}>Estado de Inventario</p>
+                        <div className="flex items-center justify-between mb-4">
+                            <p className={`text-sm font-medium ${textPrimary}`}>Alertas de Inventario</p>
+                            <Chip size="sm" color={lowStockProducts && lowStockProducts.length > 0 ? 'danger' : 'success'} variant="flat">
+                                {lowStockProducts?.length || 0} alertas
+                            </Chip>
                         </div>
-                        <div className="grid grid-cols-3 gap-6 mb-6">
-                            <div>
-                                <p className="text-xl font-semibold text-red-400">{data?.out_of_stock_products || 0}</p>
-                                <p className={`text-xs ${textSecondary} mt-0.5`}>Sin Stock</p>
+
+                        {lowStockProducts && lowStockProducts.length > 0 ? (
+                            <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-hide">
+                                {lowStockProducts.slice(0, 8).map((p) => (
+                                    <div key={p.id} className={`flex items-center justify-between py-2 px-3 rounded-lg ${isDark ? 'bg-zinc-800/40' : 'bg-zinc-100/80'}`}>
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`text-sm font-medium truncate ${textPrimary}`}>{p.name}</p>
+                                            <p className={`text-xs ${textSecondary}`}>{p.category_name || 'Sin categoría'}</p>
+                                        </div>
+                                        <div className="text-right ml-3">
+                                            <p className={`text-sm font-bold ${p.stock <= 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                                                {p.stock}
+                                            </p>
+                                            <p className={`text-[10px] ${textSecondary}`}>
+                                                {p.stock <= 0 ? 'Agotado' : `Mín: ${p.min_stock}`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <div>
-                                <p className="text-xl font-semibold text-amber-400">{data?.low_stock_products || 0}</p>
-                                <p className={`text-xs ${textSecondary} mt-0.5`}>Bajo Stock</p>
+                        ) : (
+                            <div className={`text-center py-6 ${textSecondary}`}>
+                                <p className="text-2xl mb-1">✓</p>
+                                <p className="text-sm">Todo el inventario está en orden</p>
                             </div>
-                            <div>
-                                <p className={`text-xl font-semibold ${textPrimary}`}>{(data?.out_of_stock_products || 0) + (data?.low_stock_products || 0)}</p>
-                                <p className={`text-xs ${textSecondary} mt-0.5`}>Total Alertas</p>
-                            </div>
-                        </div>
-                        <div className="flex items-end gap-1.5 h-16">
-                            {[40, 65, 30, 80, 55, 70, 45, 90, 60, 35, 75, 50].map((h, i) => (
-                                <div key={i} className="flex-1 bg-blue-500 rounded-sm opacity-80 hover:opacity-100 transition-opacity" style={{ height: `${h}%` }}></div>
-                            ))}
-                        </div>
+                        )}
                     </CardContent>
                 </Card>
 
