@@ -3,6 +3,7 @@ import { Card, CardContent, Chip, Spinner } from '@heroui/react';
 import { dashboardService } from '../services/dashboard.service';
 import { useAuthStore } from '../store/auth.store';
 import { useThemeStore } from '../store/theme.store';
+import CardSkeleton from '../components/CardSkeleton';
 
 const DashboardPage = () => {
     const { employee } = useAuthStore();
@@ -17,8 +18,13 @@ const DashboardPage = () => {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <Spinner size="lg" />
+            <div className="space-y-6">
+                <div className={`h-6 w-48 rounded-full animate-pulse ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}></div>
+                <CardSkeleton count={4} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className={`rounded-xl p-5 h-48 animate-pulse ${isDark ? 'bg-[#18181b]' : 'bg-[#f4f4f5]'}`}></div>
+                    <div className={`rounded-xl p-5 h-48 animate-pulse ${isDark ? 'bg-[#18181b]' : 'bg-[#f4f4f5]'}`}></div>
+                </div>
             </div>
         );
     }
