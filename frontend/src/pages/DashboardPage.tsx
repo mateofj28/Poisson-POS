@@ -143,35 +143,56 @@ const DashboardPage = () => {
 
                 <Card className={`${cardBg} border-none shadow-none`}>
                     <CardContent className="p-5">
-                        <div className="flex items-center justify-between mb-5">
-                            <p className={`text-sm font-medium ${textPrimary}`}>Resumen del Día</p>
-                            <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-                                <span className={`text-xs ${textSecondary}`}>Vendedor</span>
-                                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                                <span className={`text-xs ${textSecondary}`}>Caja</span>
-                            </div>
-                        </div>
-                        <div className="space-y-5">
-                            <div>
-                                <p className={`text-2xl font-semibold ${textPrimary}`}>{data?.best_seller_today || 'Sin ventas'}</p>
-                                <p className={`text-xs ${textSecondary} mt-0.5`}>Producto más vendido hoy</p>
-                                {data?.best_seller_quantity ? (
-                                    <span className="text-xs text-purple-400 font-medium">{data.best_seller_quantity} unidades</span>
-                                ) : null}
-                            </div>
-                            <div className={`h-px ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}></div>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className={`text-sm font-medium ${textPrimary}`}>Estado de Caja</p>
-                                    <p className={`text-xs ${textSecondary} mt-0.5`}>Caja registradora</p>
+                        <p className={`text-sm font-medium mb-4 ${textPrimary}`}>Estado Operativo</p>
+
+                        <div className="space-y-4">
+                            {/* Caja */}
+                            <div className={`flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-zinc-800/40' : 'bg-zinc-100/80'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${data?.active_cash_register ? 'bg-emerald-500/15' : 'bg-red-500/15'}`}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 ${data?.active_cash_register ? 'text-emerald-400' : 'text-red-400'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg>
+                                    </div>
+                                    <div>
+                                        <p className={`text-sm font-medium ${textPrimary}`}>Caja Registradora</p>
+                                        <p className={`text-xs ${textSecondary}`}>{data?.active_cash_register ? 'Lista para operar' : 'Debes abrirla para vender'}</p>
+                                    </div>
                                 </div>
-                                <Chip
-                                    color={data?.active_cash_register ? 'success' : 'danger'}
-                                    size="sm"
-                                    variant="flat"
-                                >
+                                <Chip color={data?.active_cash_register ? 'success' : 'danger'} size="sm" variant="flat">
                                     {data?.active_cash_register ? 'Abierta' : 'Cerrada'}
+                                </Chip>
+                            </div>
+
+                            {/* Best seller */}
+                            <div className={`flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-zinc-800/40' : 'bg-zinc-100/80'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-lg bg-purple-500/15 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-purple-400"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg>
+                                    </div>
+                                    <div>
+                                        <p className={`text-sm font-medium ${textPrimary}`}>{data?.best_seller_today || 'Sin ventas aún'}</p>
+                                        <p className={`text-xs ${textSecondary}`}>Más vendido hoy</p>
+                                    </div>
+                                </div>
+                                {data?.best_seller_quantity ? (
+                                    <span className={`text-sm font-bold ${textPrimary}`}>{data.best_seller_quantity} uds</span>
+                                ) : (
+                                    <span className={`text-xs ${textSecondary}`}>—</span>
+                                )}
+                            </div>
+
+                            {/* Tables summary */}
+                            <div className={`flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-zinc-800/40' : 'bg-zinc-100/80'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-blue-400"><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" /></svg>
+                                    </div>
+                                    <div>
+                                        <p className={`text-sm font-medium ${textPrimary}`}>{data?.occupied_tables || 0} mesas atendiendo</p>
+                                        <p className={`text-xs ${textSecondary}`}>{data?.free_tables || 0} disponibles de {(data?.occupied_tables || 0) + (data?.free_tables || 0)}</p>
+                                    </div>
+                                </div>
+                                <Chip color={data?.occupied_tables && data.occupied_tables > 0 ? 'warning' : 'success'} size="sm" variant="flat">
+                                    {data?.occupied_tables && data.occupied_tables > 0 ? 'Activas' : 'Libres'}
                                 </Chip>
                             </div>
                         </div>
