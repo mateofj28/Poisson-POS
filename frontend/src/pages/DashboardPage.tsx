@@ -14,13 +14,13 @@ const DashboardPage = () => {
     const { data, isLoading } = useQuery({
         queryKey: ['dashboard'],
         queryFn: dashboardService.getDashboard,
-        refetchInterval: 30000,
+        refetchInterval: 5000,
     });
 
     const { data: lowStockProducts } = useQuery({
         queryKey: ['low-stock-dashboard'],
         queryFn: () => inventoryService.getLowStock(),
-        refetchInterval: 60000,
+        refetchInterval: 5000,
     });
 
     if (isLoading) {
