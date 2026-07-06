@@ -425,8 +425,8 @@ const OrdersPage = () => {
                                     color="primary"
                                     className="flex-1 cursor-pointer font-semibold"
                                     isLoading={createMutation.isPending}
-                                    isDisabled={!selectedTable || orderItems.length === 0}
-                                    onPress={() => createMutation.mutate()}
+                                    isDisabled={!selectedTable || orderItems.length === 0 || createMutation.isPending}
+                                    onPress={() => { if (!createMutation.isPending) createMutation.mutate(); }}
                                 >
                                     Crear Pedido
                                 </Button>
