@@ -39,9 +39,10 @@ class SaleService:
         skip: int = 0,
         limit: int = 20,
         employee_id: Optional[int] = None,
+        date_from=None,
     ):
         sales, total = self.repository.get_all(
-            skip=skip, limit=limit, employee_id=employee_id
+            skip=skip, limit=limit, employee_id=employee_id, date_from=date_from
         )
         pages = (total + limit - 1) // limit
         page = (skip // limit) + 1

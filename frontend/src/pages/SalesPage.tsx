@@ -37,10 +37,11 @@ const SalesPage = () => {
     const [saleNotes, setSaleNotes] = useState('');
     const [page, setPage] = useState(1);
     const pageSize = 20;
+    const [viewMode, setViewMode] = useState<'today' | 'all'>('today');
 
     const { data, isLoading } = useQuery({
-        queryKey: ['sales', page],
-        queryFn: () => saleService.getAll({ skip: (page - 1) * pageSize, limit: pageSize }),
+        queryKey: ['sales', page, viewMode],
+        queryFn: () => saleService.getAll({ skip: (page - 1) * pageSize, limit: pageSize, today_only: viewMode === 'today' }),
     });
 
     const { data: orders } = useQuery({
@@ -112,7 +113,13 @@ const SalesPage = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Ventas</h1>
+                <div className="flex items-center gap-3">
+                    <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Ventas</h1>
+                    <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                        <button onClick={() => { setViewMode('today'); setPage(1); }} className={`px-3 py-1 text-xs font-medium cursor-pointer transition-colors ${viewMode === 'today' ? (isDark ? 'bg-zinc-800 text-white' : 'bg-zinc-900 text-white') : (isDark ? 'text-zinc-400' : 'text-zinc-500')}`}>Hoy</button>
+                        <button onClick={() => { setViewMode('all'); setPage(1); }} className={`px-3 py-1 text-xs font-medium cursor-pointer transition-colors ${viewMode === 'all' ? (isDark ? 'bg-zinc-800 text-white' : 'bg-zinc-900 text-white') : (isDark ? 'text-zinc-400' : 'text-zinc-500')}`}>Historial</button>
+                    </div>
+                </div>
                 <Button color="primary" className="cursor-pointer" onPress={() => {
                     if (availableOrders.length === 0) {
                         toast.error('No hay pedidos disponibles para cobrar');

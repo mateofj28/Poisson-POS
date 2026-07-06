@@ -7,6 +7,7 @@ export const orderService = {
         limit?: number;
         table_id?: number;
         status?: OrderStatus;
+        today_only?: boolean;
     }): Promise<OrderListResponse> => {
         const response = await api.get<OrderListResponse>('/orders', { params });
         return response.data;

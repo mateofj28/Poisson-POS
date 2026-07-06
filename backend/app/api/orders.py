@@ -25,12 +25,17 @@ def get_orders(
     limit: int = Query(20, ge=1, le=100),
     table_id: Optional[int] = None,
     status: Optional[OrderStatus] = None,
+    today_only: bool = False,
     db: Session = Depends(get_db),
     current_employee: Employee = Depends(get_current_employee),
 ):
     service = OrderService(db)
+    from datetime import datetime, timezone
+    date_from = None
+    if today_only:
+        date_from = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     return service.get_orders(
-        skip=skip, limit=limit, table_id=table_id, status_filter=status
+        skip=skip, limit=limit, table_id=table_id, status_filter=status, date_from=date_from
     )
 
 

@@ -6,6 +6,7 @@ export const saleService = {
         skip?: number;
         limit?: number;
         employee_id?: number;
+        today_only?: boolean;
     }): Promise<SaleListResponse> => {
         const response = await api.get<SaleListResponse>('/sales', { params });
         return response.data;

@@ -82,6 +82,7 @@ const OrdersPage = () => {
     const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [detailDialog, setDetailDialog] = useState<Order | null>(null);
+    const [viewMode, setViewMode] = useState<'today' | 'all'>('today');
     const [selectedTable, setSelectedTable] = useState<number>(0);
     const [orderItems, setOrderItems] = useState<OrderItemCreate[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<number>(0);
@@ -90,8 +91,8 @@ const OrdersPage = () => {
     const pageSize = 20;
 
     const { data, isLoading } = useQuery({
-        queryKey: ['orders', statusFilter, page],
-        queryFn: () => orderService.getAll({ skip: (page - 1) * pageSize, limit: pageSize, status: statusFilter || undefined }),
+        queryKey: ['orders', statusFilter, page, viewMode],
+        queryFn: () => orderService.getAll({ skip: (page - 1) * pageSize, limit: pageSize, status: statusFilter || undefined, today_only: viewMode === 'today' }),
     });
 
     const { data: tables } = useQuery({
@@ -159,7 +160,13 @@ const OrdersPage = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Pedidos</h1>
+                <div className="flex items-center gap-3">
+                    <h1 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-zinc-900'}`}>Pedidos</h1>
+                    <div className={`flex rounded-lg overflow-hidden border ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                        <button onClick={() => { setViewMode('today'); setPage(1); }} className={`px-3 py-1 text-xs font-medium cursor-pointer transition-colors ${viewMode === 'today' ? (isDark ? 'bg-zinc-800 text-white' : 'bg-zinc-900 text-white') : (isDark ? 'text-zinc-400' : 'text-zinc-500')}`}>Hoy</button>
+                        <button onClick={() => { setViewMode('all'); setPage(1); }} className={`px-3 py-1 text-xs font-medium cursor-pointer transition-colors ${viewMode === 'all' ? (isDark ? 'bg-zinc-800 text-white' : 'bg-zinc-900 text-white') : (isDark ? 'text-zinc-400' : 'text-zinc-500')}`}>Historial</button>
+                    </div>
+                </div>
                 <div className="flex items-center gap-3">
                     <Select
                         className="w-[180px]"

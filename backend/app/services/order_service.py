@@ -33,9 +33,10 @@ class OrderService:
         table_id: Optional[int] = None,
         status_filter: Optional[OrderStatus] = None,
         employee_id: Optional[int] = None,
+        date_from=None,
     ):
         orders, total = self.repository.get_all(
-            skip=skip, limit=limit, table_id=table_id, status=status_filter, employee_id=employee_id
+            skip=skip, limit=limit, table_id=table_id, status=status_filter, employee_id=employee_id, date_from=date_from
         )
         pages = (total + limit - 1) // limit
         page = (skip // limit) + 1

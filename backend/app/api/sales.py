@@ -16,13 +16,18 @@ def get_sales(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     employee_id: Optional[int] = None,
+    today_only: bool = False,
     db: Session = Depends(get_db),
     current_employee: Employee = Depends(
         require_roles(RoleEnum.ADMIN, RoleEnum.CAJERO)
     ),
 ):
     service = SaleService(db)
-    return service.get_sales(skip=skip, limit=limit, employee_id=employee_id)
+    from datetime import datetime, timezone
+    date_from = None
+    if today_only:
+        date_from = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    return service.get_sales(skip=skip, limit=limit, employee_id=employee_id, date_from=date_from)
 
 
 @router.get("/{sale_id}", response_model=SaleResponse)
