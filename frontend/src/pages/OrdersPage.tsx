@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
     Button, Chip, Spinner, Select, Label, ListBox,
 } from '@heroui/react';
@@ -8,6 +8,7 @@ import { tableService } from '../services/table.service';
 import { productService } from '../services/product.service';
 import { Order, OrderStatus, OrderItemCreate, TableStatus } from '../types';
 import { useThemeStore } from '../store/theme.store';
+import { formatDate } from '../utils/formatDate';
 import toast from 'react-hot-toast';
 
 const statusLabel: Record<OrderStatus, string> = {
@@ -218,7 +219,7 @@ const OrdersPage = () => {
                                     <Chip color={statusColor[order.status]} size="sm" variant="flat">{statusLabel[order.status]}</Chip>
                                 </td>
                                 <td className={`px-4 py-3 text-sm text-right font-medium ${isDark ? 'text-white' : 'text-zinc-900'}`}>${order.total.toLocaleString()}</td>
-                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(order.order_date).toLocaleString('es-CO')}</td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{formatDate(order.order_date)}</td>
                                 <td className="px-4 py-3 text-right">
                                     <Button size="sm" variant="flat" className="cursor-pointer" onPress={() => setDetailDialog(order)}>Ver</Button>
                                 </td>
@@ -449,7 +450,7 @@ const OrdersPage = () => {
                                 <p className="text-xl mb-0.5">🐟</p>
                                 <h2 className="text-base font-bold text-zinc-900 tracking-tight">POISSON POS</h2>
                                 <p className="text-[10px] text-zinc-400 mt-0.5 font-mono">Pedido #{String(detailDialog.id).padStart(4, '0')}</p>
-                                <p className="text-[10px] text-zinc-400 font-mono">{new Date(detailDialog.order_date).toLocaleString('es-CO')}</p>
+                                <p className="text-[10px] text-zinc-400 font-mono">{formatDate(detailDialog.order_date)}</p>
                             </div>
 
                             {/* Info */}
@@ -522,3 +523,4 @@ const OrdersPage = () => {
 };
 
 export default OrdersPage;
+

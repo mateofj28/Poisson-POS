@@ -1,10 +1,11 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { saleService } from '../services/sale.service';
 import { orderService } from '../services/order.service';
 import { Sale, PaymentCreate, PaymentMethod, OrderStatus } from '../types';
 import { useThemeStore } from '../store/theme.store';
+import { formatDate } from '../utils/formatDate';
 import toast from 'react-hot-toast';
 
 const paymentMethodLabel: Record<PaymentMethod, string> = {
@@ -161,7 +162,7 @@ const SalesPage = () => {
                                         ))}
                                     </div>
                                 </td>
-                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(sale.sale_date).toLocaleString('es-CO')}</td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{formatDate(sale.sale_date)}</td>
                                 <td className="px-4 py-3 text-right">
                                     <Button size="sm" variant="flat" className="cursor-pointer" onPress={() => setDetailDialog(sale)}>Ver</Button>
                                 </td>
@@ -417,7 +418,7 @@ const SalesPage = () => {
                                 <p className="text-xl mb-0.5">🐟</p>
                                 <h2 className="text-base font-bold text-zinc-900 tracking-tight">POISSON POS</h2>
                                 <p className="text-[10px] text-zinc-400 mt-0.5 font-mono">Venta #{String(detailDialog.id).padStart(4, '0')}</p>
-                                <p className="text-[10px] text-zinc-400 font-mono">{new Date(detailDialog.sale_date).toLocaleString('es-CO')}</p>
+                                <p className="text-[10px] text-zinc-400 font-mono">{formatDate(detailDialog.sale_date)}</p>
                             </div>
                             <div className="px-6 py-3 text-[11px] font-mono text-zinc-600 space-y-0.5 border-b border-dashed border-zinc-300">
                                 <div className="flex justify-between"><span>Pedido:</span><span className="font-semibold text-zinc-900">#{detailDialog.order_id}</span></div>
@@ -468,3 +469,4 @@ const SalesPage = () => {
 };
 
 export default SalesPage;
+

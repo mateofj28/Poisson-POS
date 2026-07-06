@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
@@ -8,6 +8,7 @@ import { inventoryService } from '../services/inventory.service';
 import { productService } from '../services/product.service';
 import { MovementType, Product } from '../types';
 import { useThemeStore } from '../store/theme.store';
+import { formatDate } from '../utils/formatDate';
 import toast from 'react-hot-toast';
 
 const movementTypeLabel: Record<MovementType, string> = {
@@ -169,7 +170,7 @@ const InventoryPage = () => {
                                         {mov.new_stock.toLocaleString()}
                                     </td>
                                     <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{mov.reason || '-'}</td>
-                                    <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(mov.created_at).toLocaleString('es-CO')}</td>
+                                    <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{formatDate(mov.created_at)}</td>
                                 </tr>
                             ))}
                             {(!movements?.items || movements.items.length === 0) && (
@@ -383,3 +384,4 @@ const InventoryPage = () => {
 };
 
 export default InventoryPage;
+

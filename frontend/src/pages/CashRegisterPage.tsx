@@ -1,8 +1,9 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button, Chip, Spinner, Card, CardContent } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cashRegisterService } from '../services/cash-register.service';
 import { useThemeStore } from '../store/theme.store';
+import { formatDate } from '../utils/formatDate';
 import toast from 'react-hot-toast';
 
 const CashRegisterPage = () => {
@@ -94,7 +95,7 @@ const CashRegisterPage = () => {
 
     <div class="section">
         <div class="row"><span class="label">Empleado:</span><span class="value">${reg.employee_name || '-'}</span></div>
-        <div class="row"><span class="label">Apertura:</span><span class="value">${new Date(reg.opened_at).toLocaleString('es-CO')}</span></div>
+        <div class="row"><span class="label">Apertura:</span><span class="value">${formatDate(reg.opened_at)}</span></div>
         <div class="row"><span class="label">Cierre:</span><span class="value">${reg.closed_at ? new Date(reg.closed_at).toLocaleString('es-CO') : '-'}</span></div>
     </div>
 
@@ -189,7 +190,7 @@ const CashRegisterPage = () => {
 
                             {/* Meta */}
                             <div className={`flex flex-wrap gap-4 text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                <span>⏱ {new Date(activeRegister.opened_at).toLocaleString('es-CO')}</span>
+                                <span>⏱ {formatDate(activeRegister.opened_at)}</span>
                                 <span>👤 {activeRegister.employee_name || '-'}</span>
                             </div>
                         </>
@@ -236,7 +237,7 @@ const CashRegisterPage = () => {
                                         {reg.is_open ? 'Abierta' : 'Cerrada'}
                                     </Chip>
                                 </td>
-                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{new Date(reg.opened_at).toLocaleString('es-CO')}</td>
+                                <td className={`px-4 py-3 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>{formatDate(reg.opened_at)}</td>
                                 <td className="px-4 py-3 text-right">
                                     {!reg.is_open && (
                                         <button
@@ -344,3 +345,4 @@ const CashRegisterPage = () => {
 };
 
 export default CashRegisterPage;
+
