@@ -397,8 +397,8 @@ const SalesPage = () => {
                                     color="primary"
                                     className="flex-1 cursor-pointer font-semibold"
                                     isLoading={createMutation.isPending}
-                                    isDisabled={!selectedOrder || payments.length === 0 || !isPaymentComplete}
-                                    onPress={() => createMutation.mutate()}
+                                    isDisabled={!selectedOrder || payments.length === 0 || !isPaymentComplete || createMutation.isPending}
+                                    onPress={() => { if (!createMutation.isPending) createMutation.mutate(); }}
                                 >
                                     Registrar Venta
                                 </Button>
