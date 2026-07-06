@@ -63,7 +63,12 @@ class OrderService:
                 detail="La mesa debe estar ocupada para crear un pedido",
             )
 
-        # Create order
+        # Check if table already has an active order - if so, add items to it
+        existing_order = self.repository.get_active_by_table(data.table_id)
+        if existing_order:
+            return self._add_items_to_order(existing_order, data.items, employee_id)
+
+        # Create new order
         order = Order(
             table_id=data.table_id,
             employee_id=employee_id,
@@ -104,6 +109,49 @@ class OrderService:
         order.items = items
 
         return self.repository.create(order)
+
+    def _add_items_to_order(self, order: Order, items_data: list, employee_id: int) -> Order:
+        """Add items to an existing active order for a table."""
+        for item_data in items_data:
+            product = self.product_repo.get_by_id(item_data.product_id)
+            if not product:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Producto ID {item_data.product_id} no encontrado",
+                )
+
+            if not product.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Producto '{product.name}' no está activo",
+                )
+
+            # Check if this product already exists in the order
+            existing_item = next((i for i in order.items if i.product_id == item_data.product_id), None)
+
+            if existing_item:
+                # Update quantity and subtotal
+                order.total -= existing_item.subtotal
+                existing_item.quantity += item_data.quantity
+                existing_item.subtotal = existing_item.unit_price * existing_item.quantity
+                order.total += existing_item.subtotal
+            else:
+                # Add new item
+                subtotal = product.sale_price * item_data.quantity
+                order.total += subtotal
+
+                item = OrderItem(
+                    order_id=order.id,
+                    product_id=item_data.product_id,
+                    quantity=item_data.quantity,
+                    unit_price=product.sale_price,
+                    subtotal=subtotal,
+                    notes=item_data.notes,
+                )
+                self.db.add(item)
+
+        order.total = round(order.total, 2)
+        return self.repository.update(order)
 
     def add_items(self, order_id: int, items_data: list[OrderItemCreate]) -> Order:
         order = self.get_order(order_id)
