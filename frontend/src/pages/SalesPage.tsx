@@ -47,7 +47,7 @@ const SalesPage = () => {
 
     const { data: orders } = useQuery({
         queryKey: ['orders-for-sale'],
-        queryFn: () => orderService.getAll({ limit: 50 }),
+        queryFn: () => orderService.getAll({ limit: 50, today_only: true }),
     });
 
     // Filter orders that haven't been sold yet (not ENTREGADO or CANCELADO)
