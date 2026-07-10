@@ -12,7 +12,6 @@ import OrdersPage from '../pages/OrdersPage';
 import NewOrderPage from '../pages/NewOrderPage';
 import SalesPage from '../pages/SalesPage';
 import NewSalePage from '../pages/NewSalePage';
-import NewSalePage from '../pages/NewSalePage';
 import InventoryPage from '../pages/InventoryPage';
 import CashRegisterPage from '../pages/CashRegisterPage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -44,7 +43,6 @@ const router = createBrowserRouter([
                 element: <MainLayout />,
                 children: [
                     { path: '/sales', element: <SalesPage /> },
-                    { path: '/sales/new', element: <NewSalePage /> },
                     { path: '/sales/new', element: <NewSalePage /> },
                     { path: '/cash-register', element: <CashRegisterPage /> },
                     { path: '/inventory', element: <InventoryPage /> },
