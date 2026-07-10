@@ -189,7 +189,13 @@ const OrdersPage = () => {
                             </ListBox>
                         </Select.Popover>
                     </Select>
-                    <Button color="primary" className="cursor-pointer" onPress={() => setDrawerOpen(true)}>
+                    <Button color="primary" className="cursor-pointer" onPress={() => {
+                        if (occupiedTables.length === 0) {
+                            toast.error('No hay mesas ocupadas para crear un pedido');
+                            return;
+                        }
+                        setDrawerOpen(true);
+                    }}>
                         + Nuevo Pedido
                     </Button>
                 </div>
