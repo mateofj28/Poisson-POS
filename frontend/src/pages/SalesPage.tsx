@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Chip, Spinner, Select, Label, ListBox } from '@heroui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { saleService } from '../services/sale.service';
@@ -25,6 +26,7 @@ const paymentMethodIcon: Record<PaymentMethod, string> = {
 };
 
 const SalesPage = () => {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
@@ -126,7 +128,7 @@ const SalesPage = () => {
                         toast.error('No hay pedidos disponibles para cobrar');
                         return;
                     }
-                    setDrawerOpen(true);
+                    navigate('/sales/new');
                 }}>
                     + Nueva Venta
                 </Button>
