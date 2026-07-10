@@ -9,6 +9,7 @@ import ProductsPage from '../pages/ProductsPage';
 import CategoriesPage from '../pages/CategoriesPage';
 import BarrelsPage from '../pages/BarrelsPage';
 import OrdersPage from '../pages/OrdersPage';
+import NewOrderPage from '../pages/NewOrderPage';
 import SalesPage from '../pages/SalesPage';
 import InventoryPage from '../pages/InventoryPage';
 import CashRegisterPage from '../pages/CashRegisterPage';
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
                     { path: '/dashboard', element: <DashboardPage /> },
                     { path: '/tables', element: <TablesPage /> },
                     { path: '/orders', element: <OrdersPage /> },
+                    { path: '/orders/new', element: <NewOrderPage /> },
                 ],
             },
         ],

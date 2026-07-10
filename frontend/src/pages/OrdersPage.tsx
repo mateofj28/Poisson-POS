@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Button, Chip, Spinner, Select, Label, ListBox,
 } from '@heroui/react';
@@ -77,6 +78,7 @@ const ProductSearch = ({ products, isDark, onSelect }: ProductSearchProps) => {
 };
 
 const OrdersPage = () => {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
@@ -194,7 +196,7 @@ const OrdersPage = () => {
                             toast.error('No hay mesas ocupadas para crear un pedido');
                             return;
                         }
-                        setDrawerOpen(true);
+                        navigate('/orders/new');
                     }}>
                         + Nuevo Pedido
                     </Button>
