@@ -23,10 +23,12 @@ def get_sales(
     ),
 ):
     service = SaleService(db)
-    from datetime import datetime, timezone
+    from datetime import datetime, timezone, timedelta
     date_from = None
     if today_only:
-        date_from = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        colombia_tz = timezone(timedelta(hours=-5))
+        now_colombia = datetime.now(colombia_tz)
+        date_from = now_colombia.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
     return service.get_sales(skip=skip, limit=limit, employee_id=employee_id, date_from=date_from)
 
 

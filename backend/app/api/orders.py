@@ -30,10 +30,13 @@ def get_orders(
     current_employee: Employee = Depends(get_current_employee),
 ):
     service = OrderService(db)
-    from datetime import datetime, timezone
+    from datetime import datetime, timezone, timedelta
     date_from = None
     if today_only:
-        date_from = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        # Colombia is UTC-5
+        colombia_tz = timezone(timedelta(hours=-5))
+        now_colombia = datetime.now(colombia_tz)
+        date_from = now_colombia.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
     return service.get_orders(
         skip=skip, limit=limit, table_id=table_id, status_filter=status, date_from=date_from
     )
