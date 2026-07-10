@@ -54,6 +54,11 @@ class OrderRepository:
         return orders, total
 
     def get_active_by_table(self, table_id: int) -> Optional[Order]:
+        # Only consider orders from today (Colombia UTC-5)
+        from datetime import timedelta
+        colombia_tz = timezone(timedelta(hours=-5))
+        today_start = datetime.now(colombia_tz).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+
         return (
             self.db.query(Order)
             .options(joinedload(Order.items).joinedload(OrderItem.product))
@@ -61,6 +66,7 @@ class OrderRepository:
                 Order.table_id == table_id,
                 Order.is_deleted == False,
                 Order.status.in_([OrderStatus.PENDIENTE, OrderStatus.EN_PREPARACION, OrderStatus.LISTO]),
+                Order.order_date >= today_start,
             )
             .first()
         )
