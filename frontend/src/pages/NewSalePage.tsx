@@ -236,13 +236,13 @@ const NewSalePage = () => {
 
                         {selectedOrderData && (
                             <div className="space-y-3 mb-4">
-                                <div className="flex justify-between text-sm">
-                                    <span className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Total pedido</span>
-                                    <span className={isDark ? 'text-white' : 'text-zinc-900'}>${selectedOrderData.total.toLocaleString()}</span>
+                                <div className="flex justify-between items-baseline">
+                                    <span className={`text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Total pedido</span>
+                                    <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-zinc-900'}`}>${selectedOrderData.total.toLocaleString()}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>Pagado</span>
-                                    <span className={`font-medium ${isPaymentComplete ? 'text-emerald-400' : (isDark ? 'text-white' : 'text-zinc-900')}`}>${totalPayments.toLocaleString()}</span>
+                                <div className="flex justify-between items-baseline">
+                                    <span className={`text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>Pagado</span>
+                                    <span className={`text-2xl font-bold ${isPaymentComplete ? 'text-emerald-400' : (isDark ? 'text-white' : 'text-zinc-900')}`}>${totalPayments.toLocaleString()}</span>
                                 </div>
 
                                 {/* Progress bar */}
@@ -251,11 +251,11 @@ const NewSalePage = () => {
                                 </div>
 
                                 {!isPaymentComplete && (
-                                    <p className="text-xs text-amber-400 font-medium">Faltan: ${(selectedOrderData.total - totalPayments).toLocaleString()}</p>
+                                    <p className="text-base text-amber-400 font-bold">Faltan: ${(selectedOrderData.total - totalPayments).toLocaleString()}</p>
                                 )}
                                 {isPaymentComplete && totalPayments > selectedOrderData.total && (
-                                    <div className={`p-2 rounded-lg ${isDark ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
-                                        <p className="text-xs text-amber-400 font-medium">💰 Devolver: ${(totalPayments - selectedOrderData.total).toLocaleString()}</p>
+                                    <div className={`p-3 rounded-lg ${isDark ? 'bg-amber-500/10' : 'bg-amber-50'}`}>
+                                        <p className="text-lg text-amber-400 font-bold">💰 Devolver: ${(totalPayments - selectedOrderData.total).toLocaleString()}</p>
                                     </div>
                                 )}
                                 {isPaymentComplete && totalPayments === selectedOrderData.total && (
