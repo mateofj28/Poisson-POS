@@ -44,7 +44,15 @@ class CashRegisterService:
         }
 
     def get_open_register(self) -> Optional[CashRegister]:
-        return self.repository.get_open_register()
+        register = self.repository.get_open_register()
+        if register:
+            # Calculate live totals from sales associated with this register
+            cash_total = self.sale_repo.get_cash_total_for_register(register.id)
+            digital_total = self.sale_repo.get_digital_total_for_register(register.id)
+            register.total_sales = round(cash_total + digital_total, 2)
+            register.total_cash_sales = round(cash_total, 2)
+            register.total_digital_sales = round(digital_total, 2)
+        return register
 
     def open_register(self, data: CashRegisterOpen, employee_id: int) -> CashRegister:
         # Check if there's already an open register
