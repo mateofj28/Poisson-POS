@@ -72,7 +72,9 @@ class OrderRepository:
         )
 
     def count_today(self) -> int:
-        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        from datetime import timedelta
+        colombia_tz = timezone(timedelta(hours=-5))
+        today_start = datetime.now(colombia_tz).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
         return (
             self.db.query(Order)
             .filter(Order.order_date >= today_start, Order.is_deleted == False)

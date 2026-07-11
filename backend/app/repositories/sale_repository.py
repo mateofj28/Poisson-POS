@@ -43,7 +43,9 @@ class SaleRepository:
         return sales, total
 
     def get_total_today(self) -> float:
-        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        from datetime import timedelta
+        colombia_tz = timezone(timedelta(hours=-5))
+        today_start = datetime.now(colombia_tz).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
         result = (
             self.db.query(func.coalesce(func.sum(Sale.total), 0.0))
             .filter(Sale.sale_date >= today_start)

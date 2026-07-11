@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from app.models.table import Table, TableStatus
 from app.models.product import Product
@@ -14,6 +14,9 @@ from app.repositories.product_repository import ProductRepository
 from app.repositories.cash_register_repository import CashRegisterRepository
 from app.schemas.dashboard import DashboardResponse
 
+# Colombia timezone
+COLOMBIA_TZ = timezone(timedelta(hours=-5))
+
 
 class DashboardService:
     def __init__(self, db: Session):
@@ -25,9 +28,9 @@ class DashboardService:
         self.cash_register_repo = CashRegisterRepository(db)
 
     def get_dashboard(self) -> DashboardResponse:
-        today_start = datetime.now(timezone.utc).replace(
+        today_start = datetime.now(COLOMBIA_TZ).replace(
             hour=0, minute=0, second=0, microsecond=0
-        )
+        ).astimezone(timezone.utc)
 
         # Sales today
         total_sales_today = self.sale_repo.get_total_today()
